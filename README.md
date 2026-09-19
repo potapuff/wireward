@@ -81,4 +81,4 @@ docker compose --profile server up -d
 
 ## Ліцензія
 
-Уточнюється.
+MIT
