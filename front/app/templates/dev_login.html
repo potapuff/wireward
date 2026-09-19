@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Вхід в обхід LMS{% endtrans %}{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>{% trans %}Вхід в обхід LMS{% endtrans %}</h1>
+  <p class="hint">{% trans %}Режим розробки. Особа не перевіряється: ким назветесь, тим і
+     увійдете. Кожен такий вхід пишеться в журнал подій як
+     <span class="mono">dev_login</span>.{% endtrans %}</p>
+
+  <form method="post" action="/auth/dev">
+    <label>{% trans %}Ідентифікатор (sub){% endtrans %}
+      <input name="sub" required value="dev-001" autocomplete="off">
+    </label>
+    <label>{% trans %}Пошта{% endtrans %}
+      <input name="email" type="email" value="dev@example.test" autocomplete="off">
+    </label>
+    <label>{% trans %}Імʼя{% endtrans %}
+      <input name="name" value="Тестовий Студент" autocomplete="off">
+    </label>
+    <button>{% trans %}Увійти{% endtrans %}</button>
+  </form>
+</section>
+{% endblock %}

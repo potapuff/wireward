@@ -1,0 +1,82 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Викладачі — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+<h1>Викладачі</h1>
+
+<p class="hint">
+  Викладач бачить лише свої групи — тими самими екранами, що й адмін, але
+  звужено до <code class="mono">obs.teacher_groups</code>. Без жодної групи
+  викладач заходить в адмінку і бачить порожні списки, а не помилку.
+</p>
+
+{% if error %}<p class="errline">{{ error }}</p>{% endif %}
+{% if saved %}<p class="warn-text">Збережено.</p>{% endif %}
+
+{% if teachers %}
+<table class="grid">
+  <thead><tr><th>Викладач</th><th>Групи</th><th></th></tr></thead>
+  <tbody>
+  {% for t in teachers %}
+    <tr>
+      <td>{{ t.name }} <span class="hint">{{ t.email or '—' }}</span></td>
+      <td>
+        {% for g in t.groups %}
+          <span class="tag">{{ g }}
+            <form method="post" action="/admin/teachers/{{ t.id }}/groups/remove"
+                  style="display:inline">
+              <input type="hidden" name="csrf_token" value="{{ csrf }}">
+              <input type="hidden" name="group_name" value="{{ g }}">
+              <button class="link" title="забрати групу">×</button>
+            </form>
+          </span>
+        {% else %}<span class="hint">жодної групи</span>{% endfor %}
+        <form method="post" action="/admin/teachers/{{ t.id }}/groups" class="choices">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <select name="group_name" required>
+            <option value="" disabled selected>+ додати групу</option>
+            {% for g in groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+          </select>
+          <button class="secondary">Додати</button>
+        </form>
+      </td>
+      <td>
+        <form method="post" action="/admin/teachers/{{ t.id }}/revoke"
+              onsubmit="return confirm('Забрати роль викладача?')">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <button class="danger">
+            Забрати роль
+          </button>
+        </form>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="hint">Жодного викладача ще не призначено.</p>
+{% endif %}
+
+<section class="block">
+  <h2>Призначити викладача</h2>
+  <form method="post" action="/admin/teachers/assign" class="choices">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <label>Студент
+      <input type="text" name="email" list="teacher-candidates" required
+             placeholder="почніть вводити ім'я чи пошту">
+    </label>
+    <datalist id="teacher-candidates">
+      {% for c in candidates %}
+        <option value="{{ c.email }}" label="{{ c.name }}">{{ c.name }}</option>
+      {% endfor %}
+    </datalist>
+    <button>Призначити</button>
+  </form>
+  <p class="hint">
+    Список — студенти, що вже заходили через Mix і ще не викладачі. Якщо
+    когось нема — він ще не логінився в кабінет.
+  </p>
+</section>
+{% endblock %}

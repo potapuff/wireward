@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Як підключитися{% endtrans %} — Wireward{% endblock %}
+
+{% block nav %}
+  <a href="/cabinet">{% trans %}Моя база{% endtrans %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="card">
+  <h1>{% trans %}Як підключитися до своєї бази{% endtrans %}</h1>
+  <p>{% trans %}У вас є персональна база даних на сервері кафедри. Підключатися до неї
+     можна будь-яким звичним клієнтом — psql, DBeaver, DataGrip, pgAdmin,
+     бібліотекою з Python чи Java.{% endtrans %}</p>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Три різні паролі, які легко переплутати{% endtrans %}</h2>
+  <table class="kv">
+    <tr><th>{% trans %}Пароль LMS{% endtrans %}</th><td>{% trans %}яким ви входите в LMS і в цей кабінет. До бази стосунку не має.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}Пароль до бази{% endtrans %}</th><td>{% trans %}випускається кнопкою в кабінеті, показується <strong>один раз</strong>. Саме його вставляють у DBeaver.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}Пароль ролі PostgreSQL{% endtrans %}</th><td>{% trans %}існує, але вам невідомий і не потрібен — його підставляє сервер.{% endtrans %}</td></tr>
+  </table>
+  <p class="hint">{% trans %}Пароль до бази зберігається лише як хеш: підказати забутий
+     неможливо, можна тільки випустити новий. Новий негайно вимикає старий —
+     тобто ламає всі підключення, які ви вже налаштували. Тому не тисніть
+     кнопку «про всяк випадок».{% endtrans %}</p>
+</section>
+
+<section class="card">
+  <h2>DBeaver {% trans %}і{% endtrans %} DataGrip</h2>
+  <ol>
+    <li>{% trans %}Створіть підключення типу{% endtrans %} <strong>PostgreSQL</strong>.</li>
+    <li>{% trans %}Хост, порт, база й користувач — з таблиці в{% endtrans %} <a href="/cabinet">{% trans %}кабінеті{% endtrans %}</a>.
+        {% trans %}Скопіюйте їх звідти, а не набирайте з памʼяті.{% endtrans %}</li>
+    <li>{% trans %}Пароль — той, що показався один раз після натискання кнопки.{% endtrans %}</li>
+    <li>{% trans %}<strong>Увімкніть SSL.</strong> У DBeaver це вкладка <em>SSL</em> →
+        <em>Use SSL</em>; у DataGrip — <em>SSH/SSL</em> → <em>Use SSL</em>.
+        Без цього зʼєднання буде відхилено ще до перевірки пароля.{% endtrans %}</li>
+    <li>{% trans %}Якщо порт не проходить крізь мережу{% endtrans %} <s>{% trans %}гуртожитку чи корпусу{% endtrans %}</s> —
+        {% trans %}спробуйте запасний, він указаний у кабінеті поруч з основним.{% endtrans %}</li>
+  </ol>
+  <p class="hint">{% trans %}У дереві обʼєктів ви побачите тільки свою базу. Це навмисно:
+     перелік чужих баз і облікових записів закрито. Робота з власною базою від
+     цього не змінюється.{% endtrans %}</p>
+  <p class="hint">{% trans %}Сертифікат сервера справжній (Let's Encrypt), тож замість{% endtrans %}
+     <span class="mono">sslmode=require</span> {% trans %}можна ввімкнути й перевірку імені хоста{% endtrans %}
+     (<span class="mono">verify-full</span>) — {% trans %}у psql додайте{% endtrans %}
+     <span class="mono">sslrootcert=system</span>, {% trans %}у DBeaver/DataGrip — властивість драйвера{% endtrans %}
+     <span class="mono">sslfactory=org.postgresql.ssl.DefaultJavaSSLFactory</span>.
+     {% trans %}Не обовʼязково — з{% endtrans %} <span class="mono">require</span> {% trans %}канал так само шифрований.{% endtrans %}</p>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Як приховати чужі бази в клієнті{% endtrans %}</h2>
+  <p>{% trans %}Технічно ви бачите лише свою базу — але клієнт може додатково показувати
+     чи кешувати системні бази ({% endtrans %}<span class="mono">postgres</span>,
+     <span class="mono">template0</span>, <span class="mono">template1</span>){% trans %}
+     або старі підключення, якщо ви колись підʼєднувалися з іншим обліковим
+     записом. Це не витік доступу, просто зайвий шум у дереві.{% endtrans %}</p>
+  <ul>
+    <li>{% trans %}<strong>DBeaver.</strong> Edit Connection → вкладка <em>PostgreSQL</em>
+        → вимкніть перемикач <em>Show all databases</em>. Дерево звузиться до
+        бази з вашого підключення.{% endtrans %}</li>
+    <li>{% trans %}<strong>DataGrip.</strong> У налаштуваннях підключення (Data Source
+        Properties) є аналогічний перемикач показу системних баз/схем — у
+        панелі <em>Schemas</em> зменшіть область видимості до своєї бази.{% endtrans %}</li>
+  </ul>
+  <p class="hint">{% trans %}Точні назви пунктів можуть відрізнятися між версіями клієнта
+     — шукайте перемикач показу системних баз у налаштуваннях зʼєднання.{% endtrans %}</p>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Що записується{% endtrans %}</h2>
+  <p>{% trans %}Кожен SQL-запит, який ви виконуєте у своїй базі: і успішний, і той, що
+     завершився помилкою, разом із текстом запиту й часом виконання. Помилкові
+     запити — найцінніші: саме з них видно, де саме виникла складність.{% endtrans %}</p>
+  <p class="hint">{% trans %}Тому не тримайте в навчальній базі персональні чи будь-які
+     інші чутливі дані — вона для лабораторних.{% endtrans %}</p>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Обмеження, які варто знати заздалегідь{% endtrans %}</h2>
+  <table class="kv">
+    <tr><th>{% trans %}Місце{% endtrans %}</th><td>{% trans %}на базу виділено фіксовану квоту; поточний стан видно в кабінеті. Коли воно закінчується, перестають працювати лише оператори, що{% endtrans %} <em>{% trans %}додають{% endtrans %}</em> {% trans %}дані.{% endtrans %} <code class="mono">SELECT</code>, <code class="mono">DELETE</code> {% trans %}і{% endtrans %} <code class="mono">DROP TABLE</code> {% trans %}працюють як завжди — інакше вибратися з переповненої бази було б неможливо.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}Час запиту{% endtrans %}</th><td>{% trans %}запит, що виконується надто довго, буде перерваний. Для лабораторних цього з запасом достатньо; якщо впираєтеся — майже завжди справа в запиті, а не в межі.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}Параметри памʼяті{% endtrans %}</th><td><code class="mono">SET work_mem</code> {% trans %}і{% endtrans %} <code class="mono">SET statement_timeout</code> {% trans %}не приймаються. Памʼять сервера спільна на всю групу, і один запит не має класти роботу решті.{% endtrans %}</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Повідомлення про помилку і що воно означає{% endtrans %}</h2>
+  <table class="kv">
+    <tr><th>{% trans %}зʼєднання без TLS відхилено{% endtrans %}</th><td>{% trans %}не ввімкнено SSL у клієнті — див. пункт 4 вище.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}пароль ще не випущено{% endtrans %}</th><td>{% trans %}відкрийте кабінет і натисніть «Випустити пароль».{% endtrans %}</td></tr>
+    <tr><th>{% trans %}термін дії пароля вичерпано{% endtrans %}</th><td>{% trans %}випустіть новий у кабінеті.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}зайдіть у кабінет і прочитайте, який журнал ведеться{% endtrans %}</th><td>{% trans %}ви ще не підтвердили згоду на першому екрані.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}ця база вам не належить{% endtrans %}</th><td>{% trans %}у полі «база» вказано чуже імʼя. Скопіюйте своє з кабінету.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}забагато невдалих спроб входу{% endtrans %}</th><td>{% trans %}кілька разів поспіль пішов невірний пароль. Зачекайте хвилину; найчастіше винен клієнт, який мовчки перепідключається зі старим паролем після ротації.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}сервер перевантажений{% endtrans %}</th><td>{% trans %}усі підключення зайняті — зазвичай на початку заняття. Спробуйте за хвилину.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}Місце вичерпано{% endtrans %}</th><td>{% trans %}квота; видаліть зайве або перестворіть базу в кабінеті.{% endtrans %}</td></tr>
+    <tr><th>{% trans %}Wireward не дозволяє змінювати параметр{% endtrans %}</th><td>{% trans %}див. «Параметри памʼяті» вище.{% endtrans %}</td></tr>
+  </table>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Якщо все зламалося{% endtrans %}</h2>
+  <p>{% trans %}У кабінеті є кнопка «Перестворити базу»: вона видаляє базу з усіма даними
+     і створює порожню.{% endtrans %} <strong>{% trans %}Журнал ваших запитів при цьому зберігається{% endtrans %}</strong> —
+     {% trans %}тобто виконана робота не пропадає, навіть якщо самі дані ви втратили.{% endtrans %}</p>
+  <p>{% trans %}Якщо не допомогло — напишіть викладачеві, вказавши точний текст помилки.
+     Він видно й з боку сервера, але з вашим текстом розбір коротший.{% endtrans %}</p>
+</section>
+{% endblock %}

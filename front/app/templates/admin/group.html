@@ -1,0 +1,85 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Група {{ group }} — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>Група {{ group }}</h1>
+  {{ a.period_picker(days, periods, '/admin/group/' + (group | urlencode)) }}
+</div>
+
+<p class="hint foot-note">
+  <a href="/admin/groups">&larr; усі групи</a> ·
+  <a href="/admin/queries?group={{ group | urlencode }}">останні запити цієї групи</a>
+</p>
+
+<div class="scroll">
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Студент</th>
+      <th class="num">Розмір</th>
+      <th class="num">Запитів</th>
+      <th class="num">Помилок</th>
+      <th class="num">Сесій</th>
+      <th>Зараз над чим</th>
+      <th>Активність (14 днів)</th>
+      <th>Остання</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    {% set pct = (r.used_bytes * 100 // r.quota_bytes) if r.quota_bytes and r.used_bytes else 0 %}
+    {% set errpct = (r.errors * 100 // r.total) if r.total else 0 %}
+    <tr class="{{ 'muted' if not r.total }}">
+      <td>
+        <a href="/admin/student/{{ r.id }}">{{ r.display_name or r.email or '—' }}</a>
+        {% if r.disabled_at %}<span class="tag off">вимкнено</span>{% endif %}
+        {% if not r.consented_at %}<span class="tag warn">без згоди</span>{% endif %}
+        {% if not r.db_name %}<span class="tag warn">без бази</span>{% endif %}
+      </td>
+      <td class="num">
+        {% if r.used_bytes is not none %}
+          <span class="{{ 'hot' if pct >= 80 }}">{{ (r.used_bytes / 1048576) | round(1) }} МБ</span>
+          <span class="hint">{{ pct }}%</span>
+        {% else %}<span class="hint">—</span>{% endif %}
+      </td>
+      <td class="num">{{ r.total or 0 }}</td>
+      <td class="num">
+        {% if r.errors %}<span class="{{ 'hot' if errpct >= 40 }}">{{ r.errors }}</span>
+          <span class="hint">{{ errpct }}%</span>
+        {% else %}<span class="hint">0</span>{% endif %}
+      </td>
+      <td class="num">{{ r.sessions or 0 }}</td>
+      {% set h = here.get(r.id | string) %}
+      <td class="nowcell">
+        {% if h %}
+          <a href="/admin/lab/{{ h.lab_id }}">{{ h.title }}</a>
+          <span class="hint">{{ h.done }}/{{ h.total }}{% if h.also %} +{{ h.also | length }}{% endif %} ·
+            {% if h.idle_hours < 24 %}сьогодні
+            {% else %}{{ (h.idle_hours / 24) | round(0) | int }} дн.{% endif %}</span>
+        {% else %}<span class="hint">—</span>{% endif %}
+      </td>
+      <td class="sparkcell">{{ a.sparkline(spark.get(r.id|string, [])) }}</td>
+      <td class="num">
+        {% if r.last_query_at %}{{ r.last_query_at.strftime('%d.%m %H:%M') }}
+        {% else %}<span class="hint">не працював</span>{% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="hint">У цій групі немає студентів.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<section class="block">
+  <h2>Треймап активності за тиждень</h2>
+  <p class="hint">Плитка — лабораторна, розмір — кількість запитів за 7 днів,
+     колір — частка помилок (від cyan до amber). Читається «на якій лабі
+     найбільше часу», а не числами.</p>
+  {{ a.lab_treemap(tiles) }}
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Помилка{% endtrans %} — Wireward{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>{% trans %}Не вдалося увійти{% endtrans %}</h1>
+  <p>{{ message }}</p>
+  <p><a class="button" href="/">{% trans %}Спробувати ще раз{% endtrans %}</a></p>
+</section>
+{% endblock %}

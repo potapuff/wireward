@@ -1,0 +1,364 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}{{ student.display_name or student.email }} — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>{{ student.display_name or student.email or 'Студент' }}</h1>
+  <a class="button small-btn" href="/admin/activity?student={{ student.id }}&days={{ days }}">Активність</a>
+  {{ a.period_picker(days, periods, '/admin/student/' ~ student.id) }}
+</div>
+
+<div class="who-line">
+  <span class="mono">{{ student.email or '—' }}</span> ·
+  {{ 'групи' if student.groups | length > 1 else 'група' }}
+  {{ student.groups | join(', ') if student.groups else '—' }} ·
+  база <span class="mono">{{ student.db_name or '—' }}</span> ·
+  роль <span class="mono">{{ student.role_name or '—' }}</span>
+  {% if not student.consented_at %}<span class="tag warn">згоди немає</span>{% endif %}
+  {% if student.disabled_at %}<span class="tag off">вимкнено</span>{% endif %}
+</div>
+
+<div class="tiles">
+  <div class="tile"><b>{{ stats.total or 0 }}</b><span>запитів</span></div>
+  <div class="tile"><b class="{{ 'hot' if stats.total and stats.errors * 100 // stats.total >= 40 }}">{{ stats.errors or 0 }}</b>
+    <span>помилок{% if stats.total %}, {{ stats.errors * 100 // stats.total }}%{% endif %}</span></div>
+  <div class="tile"><b>{{ stats.sessions or 0 }}</b><span>сесій</span></div>
+  <div class="tile"><b>{{ ((stats.total_ms or 0) / 1000) | round(1) }}</b><span>секунд у СУБД</span></div>
+  <div class="tile wide">
+    <span class="tile-label">активність за 14 днів</span>
+    {{ a.sparkline(spark, 220, 26) }}
+  </div>
+  {% if student.quota_bytes and student.used_bytes is not none %}
+  <div class="tile"><b class="{{ 'hot' if student.used_bytes * 100 // student.quota_bytes >= 80 }}">{{ (student.used_bytes / 1048576) | round(1) }}</b>
+    <span>МБ з {{ (student.quota_bytes / 1048576) | round(0) | int }}</span></div>
+  {% endif %}
+</div>
+
+{% if request.state.is_admin %}
+{% if student.tablespace_name %}
+<section class="block">
+  <h2>Квота</h2>
+  {% if quota_error %}<p class="hint warn-text">Квоту не змінено: {{ quota_error }}</p>{% endif %}
+  {% if quota_saved %}<p class="hint">Квоту оновлено.</p>{% endif %}
+  <form method="post" action="/admin/student/{{ student.id }}/quota" class="filters">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <label>Нова квота, МБ
+      <input type="number" name="quota_mb" min="10" max="1024" required
+             value="{{ (student.quota_bytes / 1048576) | round(0) | int if student.quota_bytes else 50 }}">
+    </label>
+    <button>Змінити квоту</button>
+  </form>
+  <p class="hint foot-note">Жорстку межу файлової системи (типово 50 МБ на
+     слот) це не рухає — лише мʼяку квоту, яку перевіряє проксі. Значення вище
+     за 50 МБ означає, що мʼяка квота попереджатиме пізніше за фактичний ліміт
+     диска.</p>
+</section>
+{% endif %}
+
+{% if student.db_name %}
+<section class="block">
+  <h2>Обслуговування</h2>
+  {% if vacuum_error %}<p class="hint warn-text">VACUUM не виконано: {{ vacuum_error }}</p>{% endif %}
+  {% if vacuum_ms %}<p class="hint">VACUUM ANALYZE виконано за {{ vacuum_ms }} мс.</p>{% endif %}
+  <form method="post" action="/admin/student/{{ student.id }}/vacuum" class="filters">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <button>Запустити VACUUM ANALYZE</button>
+  </form>
+  <p class="hint foot-note">Виконується на всій базі студента від імені
+     службової ролі <span class="mono">obs_maintenance</span>, напряму,
+     минаючи проксі. Прибирає мертві рядки й оновлює статистику планувальника
+     — не рухає квоту і не звільняє місце, зайняте живими даними.</p>
+</section>
+{% endif %}
+{% endif %}
+
+<section class="block">
+  <h2>Показники процесу</h2>
+  {% if ind and ind.queries %}
+    <div class="tiles">
+      <div class="tile"><span class="tile-label">і1 · з першої спроби</span>
+        <b>{{ '%.0f' | format(ind.first_try * 100) }}%</b>
+        <span>відбитків, що спрацювали одразу</span></div>
+      <div class="tile"><span class="tile-label">і2 · без паузи на набір</span>
+        <b>{{ '%.0f' | format(ind.paste * 100) }}%</b>
+        <span>з {{ ind.paste_of }} довгих запитів</span></div>
+      <div class="tile"><span class="tile-label">і3 · над своєю лінією</span>
+        <b>{{ '%.0f' | format(ind.jump * 100) }}%</b>
+        <span>запитів, складніших за базову</span></div>
+      <div class="tile"><span class="tile-label">і4 · синтаксичні</span>
+        <b>{{ '%.0f' | format(ind.syntax_share * 100) }}%</b>
+        <span>з {{ ind.errors }} помилок</span></div>
+      <div class="tile"><span class="tile-label">і5 · темп</span>
+        <b>{{ ind.tempo }}</b><span>с між запитами, медіана</span></div>
+      <div class="tile"><span class="tile-label">і6 · вибрався сам</span>
+        <b>{% if ind.resolved is none %}—{% else %}{{ '%.0f' | format(ind.resolved * 100) }}%{% endif %}</b>
+        <span>із {{ ind.stuck }} застрягань</span></div>
+      <div class="tile"><span class="tile-label">і7 · error quotient</span>
+        <b>{{ '%.2f' | format(ind.eq) }}</b><span>Jadud, над SQLSTATE</span></div>
+      <div class="tile"><span class="tile-label">і8 · повільніше за групу</span>
+        <b>{% if ind.slow is none %}—{% else %}{{ '%.0f' | format(ind.slow * 100) }}%{% endif %}</b>
+        <span>помилок, де думав довше за ¾ групи</span></div>
+    </div>
+    <p class="hint foot-note">
+      <b>і8</b> порівнює студента не з порогом, а з однокурсниками на <em>тій
+      самій</em> помилці: `42601` виправляють за секунди, `42803` вимагає
+      зрозуміти агрегацію, і один поріг на обидві нічого не значив би. Прочерк —
+      це «розподілу по групі ще немає», а не «швидко». Повільність тут не
+      слабкість: це може бути читання підручника, розмова з викладачем або обід.
+    </p>
+    <p class="hint foot-note">
+      Формули заморожені й описані в <span class="mono">docs/11-indicators.md</span>;
+      пораховано {{ ind.computed_at.strftime('%d.%m %H:%M') }} за весь журнал.
+      <b>Це опис активності, а не авторства.</b> Вставлений блок, що виконався з
+      першої спроби, у даних виглядає як робота дуже сильного студента, і жодна
+      формула цього не розрізнить. Числа кажуть, про що спитати на захисті, —
+      відповідь дає захист.
+    </p>
+  {% elif ind %}
+    <p class="hint">Запитів у журналі немає.</p>
+  {% else %}
+    <p class="hint">Ще не рахувалося — фоновий перерахунок іде раз на дві хвилини.</p>
+  {% endif %}
+</section>
+
+{% if ind and ind.no_trace %}
+<section class="block">
+  <h2>Зʼявилося без спроб</h2>
+  <p class="hint">
+    <b>Це не детектор і не звинувачення.</b> Рівно так само виглядає запит,
+    скопійований із власної попередньої лабораторної, з методички чи з
+    документації — або просто написаний людиною, яка знає, що робить. Нічого не
+    заблоковано і не зараховано. Перелік існує з однією метою: спитати про ці
+    рядки на захисті. Відповідь дає захист, не таблиця.
+  </p>
+  <table class="grid">
+    <thead><tr><th>Коли</th><th>Ознаки</th><th>Запит</th></tr></thead>
+    <tbody>
+    {% for t in ind.no_trace %}
+      <tr>
+        <td class="mono">{{ t.at[5:16] | replace('T', ' ') }}</td>
+        <td>{% for sg in t.signals %}<span class="tag">{{ sg }}</span>{% endfor %}</td>
+        <td class="sql"><code>{{ t.sql }}</code></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint foot-note">
+    <b>одразу</b> — перша ж спроба з цим запитом успішна, спроб до неї немає;
+    <b>складніше</b> — складність вища за власну базову лінію цього студента;
+    <b>без набору</b> — довгий запит менш ніж за дві секунди після попереднього.
+    Показано лише те, де збіглося щонайменше дві ознаки: одна — це звичайний
+    робочий день.
+  </p>
+</section>
+{% endif %}
+
+{% if here %}
+<section class="block here">
+  <h2>Зараз</h2>
+  <p class="hint">Меж у лабораторних немає, тому питання не «чи встиг», а
+     «на чому стоїть». Це остання за часом робота, а не поточний намір
+     студента: журнал бачить запити, а не плани.</p>
+  <div class="here-card">
+    <div class="here-lab">
+      <a href="/admin/lab/{{ here.lab_id }}">{{ here.title }}</a>
+      <span class="here-cov">{{ here.done }} з {{ here.total }} зразків</span>
+    </div>
+    <div class="here-when">
+      {% if here.idle_hours < 1 %}щойно
+      {% elif here.idle_hours < 24 %}{{ here.idle_hours | round(0) | int }} год тому
+      {% else %}{{ (here.idle_hours / 24) | round(0) | int }} дн. тому
+      {% endif %}
+      <span class="hint">{{ here.last_at.strftime('%d.%m %H:%M') }}</span>
+    </div>
+  </div>
+  {% if here.missing %}
+  <p class="here-missing"><b>Не відтворено:</b>
+     {{ here.missing | map(attribute='title') | select | join('; ') }}</p>
+  {% endif %}
+  {% if here.also %}
+  <p class="hint">Тими самими днями поверталися й до:
+     {% for a in here.also %}<a href="/admin/lab/{{ a.lab_id }}">{{ a.title }}</a>
+       ({{ a.coverage }}%){% if not loop.last %}, {% endif %}{% endfor %}.
+     Роботу над кількома лабами впереміш модель дозволяє навмисно.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<section class="block">
+  <h2>Лабораторні</h2>
+  <p class="hint">Зворотний зріз того самого зіставлення, що й на екрані лаби:
+     покриття — «дійшов до задачі», а не «розвʼязав правильно». Останнє слово
+     за викладачем, тому поруч видно, чого саме не відтворено.</p>
+  {% if labs %}
+  <table class="grid">
+    <thead><tr><th>Лабораторна</th><th class="num">покриття</th>
+               <th class="num">запитів</th><th class="num">помилок</th>
+               <th class="num" title="з першої спроби, у межах цієї лаби">і1</th>
+               <th class="num" title="Error Quotient у межах цієї лаби">і7</th>
+               <th>перша — остання спроба</th><th>не відтворено</th></tr></thead>
+    <tbody>
+    {% for l in labs %}
+      <tr class="{{ 'service' if not l.queries }}">
+        <td><a href="/admin/lab/{{ l.lab_id }}">{{ l.title }}</a>
+            {% if l.forbidden %}
+              <span class="errline">заборонене:
+                {{ l.forbidden | map(attribute='title') | join(', ') }}</span>
+            {% endif %}</td>
+        <td class="num">{{ l.coverage }}%</td>
+        <td class="num">{{ l.queries }}</td>
+        <td class="num">{{ l.errors }}</td>
+        {% set li = lab_ind.get(l.lab_id | string) %}
+        <td class="num">{{ '%.0f%%' | format(li.first_try * 100) if li else '—' }}</td>
+        <td class="num">{{ '%.2f' | format(li.eq) if li else '—' }}</td>
+        <td>{% if l.first_at %}{{ l.first_at.strftime('%d.%m %H:%M') }} —
+            {{ l.last_at.strftime('%d.%m %H:%M') }}{% else %}—{% endif %}</td>
+        <td class="hint">{{ l.missing | map(attribute='title') | select | join('; ') or '—' }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="hint">Лабораторних для груп цього студента не заведено.</p>
+  {% endif %}
+</section>
+
+{% if stuck %}
+<section class="block">
+  <h2>Де застряг</h2>
+  <p class="hint">Запити, згруповані за нормалізованим відбитком: однаковий запит
+     із різними числами й рядками — це одна спроба, повторена кілька разів.
+     Показані ті, що падали щонайменше тричі.</p>
+  <div class="scroll">
+  <table class="grid">
+    <thead><tr><th class="num">спроб</th><th class="num">невдалих</th><th>Помилка</th><th>Запит</th><th>Коли</th></tr></thead>
+    <tbody>
+    {% for s in stuck %}
+      <tr class="{{ 'err' if s.failed == s.attempts }}">
+        <td class="num">{{ s.attempts }}</td>
+        <td class="num hot">{{ s.failed }}</td>
+        <td class="mono small">{{ s.sqlstate }}<br><span class="hint">{{ s.error_message }}</span></td>
+        <td class="sql"><code>{{ s.sample }}</code></td>
+        <td class="mono small">{{ s.first_at.strftime('%d.%m %H:%M') }}<br>
+            <span class="hint">{{ s.last_at.strftime('%d.%m %H:%M') }}</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endif %}
+
+<section class="block">
+  <h2>Сесії</h2>
+  <div class="scroll">
+  <table class="grid">
+    <thead><tr><th>Початок</th><th class="num">тривалість</th><th>Клієнт</th><th>Роль</th>
+      <th class="num">порт</th><th class="num">запитів</th><th class="num">помилок</th>
+      <th class="num">службових</th><th>Завершення</th></tr></thead>
+    <tbody>
+    {% for s in sessions %}
+      <tr>
+        <td class="mono">{{ s.started_at.strftime('%d.%m %H:%M:%S') }}</td>
+        <td class="num">{% if s.ended_at %}{{ ((s.ended_at - s.started_at).total_seconds() / 60) | round(1) }} хв{% else %}<span class="hint">триває</span>{% endif %}</td>
+        <td class="small">
+          {% if s.client_name %}
+            {{ s.client_name }}{% if s.client_version %} <span class="hint">{{ s.client_version }}</span>{% endif %}
+            {% if s.client_guessed %}<span class="tag warn" title="Клієнт не представився; назву виведено з непрямих ознак">здогад</span>{% endif %}
+          {% else %}<span class="hint">не представився</span>{% endif %}
+        </td>
+        <td class="small hint">{{ s.client_purpose or '' }}</td>
+        <td class="num mono">{{ s.listen_port }}</td>
+        <td class="num">{{ s.queries_total }}</td>
+        <td class="num">{{ s.errors_total or '' }}</td>
+        <td class="num hint">{{ s.catalog_queries or '' }}</td>
+        <td class="small hint">{{ s.end_reason or '' }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="hint">Підключень за цей період не було.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="hint">Порт 8080 означає, що студенту довелося йти в обхід: мережа
+     різала 55432. Колонка «роль» — це те, як клієнт сам підписав підключення:
+     DBeaver і DataGrip розділяють <code>Main</code> (робота користувача) і
+     <code>Metadata</code> (читання схеми для дерева обʼєктів).</p>
+</section>
+
+{% if suspicions %}
+<section class="block">
+  <h2>Підозри</h2>
+  <p class="hint">Запити виконалися успішно — СУБД тут помилки не бачить.
+     Це попередження вам, а не студентові: воно нічого не блокує, і хибне
+     спрацювання коштує дешево.</p>
+  <table class="grid">
+    <thead><tr><th class="num">разів</th><th>Що саме</th><th>Приклад</th></tr></thead>
+    <tbody>
+    {% for s in suspicions %}
+      <tr>
+        <td class="num">{{ s.count }}</td>
+        <td><b>{{ s.title }}</b><span class="errline">{{ s.explanation }}</span></td>
+        <td class="sql"><code>{{ s.sample[:200] }}</code></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="block">
+  <h2>Запити</h2>
+  <nav class="periods">
+    <a href="/admin/student/{{ student.id }}?days={{ days }}{{ '&service=1' if service }}" class="{{ 'on' if not errors }}">усі</a>
+    <a href="/admin/student/{{ student.id }}?days={{ days }}&errors=1{{ '&service=1' if service }}" class="{{ 'on' if errors }}">лише помилки</a>
+    <a href="/admin/student/{{ student.id }}?days={{ days }}{{ '&errors=1' if errors }}{{ '' if service else '&service=1' }}"
+       class="{{ 'on' if service }}">{{ 'без службових' if service else 'показати службові' }}</a>
+  </nav>
+  <div class="scroll">
+  <table class="grid queries">
+    <thead><tr><th>Час</th><th class="num">мс</th><th class="num">рядків</th>
+               <th title="Допоміжний сигнал: та сама міра схожості, але згладжена контекстом сусідніх запитів студента в часі (docs/article-p4-research/07-10) — не заміна покриття вище, лише орієнтир, якщо відбиток сам по собі на межі порогу">
+                 контекст</th>
+               <th>Запит</th></tr></thead>
+    <tbody>
+    {% for r in rows %}
+      <tr class="{{ 'err' if r.status == 'error' }}{{ ' service' if r.is_service }}">
+        <td class="num mono">{{ r.started_at.strftime('%d.%m %H:%M:%S') }}</td>
+        <td class="num">{{ r.duration_ms | round(1) }}</td>
+        <td class="num">{{ r.rows_affected if r.rows_affected is not none else '—' }}</td>
+        <td class="hint small">{{ temporal.get(r.id) or '⊥' if r.id in temporal else '' }}</td>
+        {{ a.sqlcell(r) }}
+      </tr>
+    {% else %}
+      <tr><td colspan="5" class="hint">Запитів за цей період немає.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="block">
+  <h2>Події бази</h2>
+  <div class="scroll">
+  <table class="grid">
+    <thead><tr><th>Коли</th><th>Подія</th><th>Хто</th><th>Деталі</th></tr></thead>
+    <tbody>
+    {% for e in events %}
+      <tr>
+        <td class="mono">{{ e.at.strftime('%d.%m %H:%M:%S') }}</td>
+        <td>{{ e.event }}</td>
+        <td class="hint">{{ e.actor }}</td>
+        <td class="mono small hint">{{ e.details }}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="4" class="hint">Подій немає.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</section>
+{% endblock %}

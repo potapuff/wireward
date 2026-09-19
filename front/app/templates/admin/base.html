@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block nav %}
+  <a href="/admin/groups" class="{{ 'on' if nav == 'groups' }}">Групи</a>
+  <a href="/admin/students" class="{{ 'on' if nav == 'students' }}">Студенти</a>
+  {% if request.state.is_admin %}
+    <a href="/admin/overview" class="{{ 'on' if nav == 'overview' }}">Дашборд</a>
+  {% endif %}
+  <a href="/admin/queries" class="{{ 'on' if nav == 'queries' }}">Запити</a>
+  <a href="/admin/activity" class="{{ 'on' if nav == 'activity' }}">Активність</a>
+  <a href="/admin/labs" class="{{ 'on' if nav == 'labs' }}">Лабораторні</a>
+  <a href="/admin/events" class="{{ 'on' if nav == 'events' }}">Події баз</a>
+  {% if request.state.is_admin %}
+    <a href="/admin/teachers" class="{{ 'on' if nav == 'teachers' }}">Викладачі</a>
+  {% endif %}
+  <span class="who">{{ 'адміністрування' if request.state.is_admin else 'мої групи' }}</span>
+  <a href="/cabinet">Моя база</a>
+{% endblock %}
+
+{% macro period_picker(current, periods, base, extra='') %}
+<nav class="periods" aria-label="Період">
+  {% for key, label in periods.items() %}
+    <a href="{{ base }}?days={{ key }}{{ extra }}" class="{{ 'on' if key == current }}">{{ label }}</a>
+  {% endfor %}
+</nav>
+{% endmacro %}
+
+{% macro gap_banner(gaps) %}
+{% if gaps %}
+<div class="gaps">
+  <strong>Журнал неповний.</strong>
+  {% for g in gaps %}
+    <div>{{ g.started_at.strftime('%d.%m %H:%M') }} —
+      {{ g.ended_at.strftime('%d.%m %H:%M') if g.ended_at else 'триває' }}:
+      {{ g.reason }}</div>
+  {% endfor %}
+  <div class="hint">Дані за ці проміжки неповні. Будь-які висновки про активність
+    у цей час робити не можна.</div>
+</div>
+{% endif %}
+{% endmacro %}
+
+{# Назва навмисно не «spark»: макроси батьківського шаблону перекривають
+   однойменні змінні контексту, а змінна spark несе самі дані. #}
+{% macro sparkline(values, w=110, h=20) %}
+{% if values and values|sum > 0 %}
+{%- set mx = values|max -%}
+<svg class="spark" viewBox="0 0 {{ w }} {{ h }}" width="{{ w }}" height="{{ h }}"
+     role="img" aria-label="Активність за 14 днів, максимум {{ mx }} запитів за день">
+  {%- set step = w / values|length -%}
+  {%- for v in values -%}
+    {%- set bh = (v / mx * (h - 2)) if v else 0 -%}
+    <rect x="{{ (loop.index0 * step) | round(2) }}" y="{{ (h - bh) | round(2) }}"
+          width="{{ (step - 1.2) | round(2) }}" height="{{ bh | round(2) if bh else 0.8 }}"
+          fill="currentColor" opacity="{{ '0.85' if v else '0.18' }}"></rect>
+  {%- endfor -%}
+</svg>
+{% else %}<span class="hint">—</span>{% endif %}
+{% endmacro %}
+
+{% macro sqlcell(row) %}
+<td class="sql">
+  {# Постійне посилання на рядок журналу: на захисті треба відкрити саме його. #}
+  {% if row.id %}<a class="permalink mono" href="/admin/query/{{ row.id }}"
+     title="постійне посилання на цей запит">#{{ row.id }}</a>{% endif %}
+  <code>{{ row.sql_text }}</code>
+  {%- if row.params %}<span class="params">{{ row.params }}</span>{% endif -%}
+  {%- if row.status == 'error' %}
+    <span class="errline"><b>{{ row.sqlstate }}</b> {{ row.error_message }}</span>
+  {% endif -%}
+</td>
+{% endmacro %}
+
+{# Плитка за лабораторною (З13/З14): розмір — flex-grow із tiles[].size_pct
+   (front/app/admin.py:_sized), колір — error_rate. Назва навмисно не
+   «tiles»/«treemap»: та сама пастка з макросами, що й у sparkline() вище —
+   контекст завжди передає дані під іншим імʼям (activity_tiles/tiles). #}
+{% macro lab_treemap(tiles) %}
+{% if tiles %}
+<div class="treemap">
+  {% for t in tiles %}
+  <a class="tm-tile" href="/admin/lab/{{ t.lab_id }}"
+     style="--lvl: {{ t.error_rate | round(3) }}; flex-grow: {{ t.size_pct }};"
+     title="{{ t.title }}: {{ t.queries }} запитів, {{ t.errors }} помилок ({{ (t.error_rate * 100) | round(0) | int }}%), {{ t.students }} студентів, найактивніший — {{ t.top_student or '—' }}">
+    <span class="tm-title">{{ t.title }}</span>
+    <span class="tm-value">{{ t.queries }} <span class="hint">запитів</span></span>
+    <span class="tm-sub hint">{{ (t.error_rate * 100) | round(0) | int }}% помилок · {{ t.students }} студ.</span>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="hint">За цей період активності немає.</p>
+{% endif %}
+{% endmacro %}
+
+{% macro disk_treemap(tiles) %}
+{% if tiles %}
+<div class="treemap">
+  {% for t in tiles %}
+    <a class="tm-tile" href="/admin/student/{{ t.student_id }}"
+       style="--lvl: {{ (t.pct or 0) | round(3) }}; flex-grow: {{ t.size_pct }};"
+       title="{{ t.student or '—' }}: {% if t.used_bytes is not none %}{{ (t.used_bytes / 1048576) | round(1) }} з {{ (t.quota_bytes / 1048576) | round(0) | int }} МБ{% else %}ще не виміряно{% endif %}">
+      <span class="tm-title">{{ t.student or '—' }}</span>
+      <span class="tm-value">
+        {% if t.used_bytes is not none %}{{ (t.used_bytes / 1048576) | round(1) }} <span class="hint">МБ</span>
+        {% else %}<span class="hint">не виміряно</span>{% endif %}
+      </span>
+      <span class="tm-sub hint">{% if t.pct is not none %}{{ (t.pct * 100) | round(0) | int }}% від {{ (t.quota_bytes / 1048576) | round(0) | int }} МБ{% else %}—{% endif %}</span>
+    </a>
+  {% endfor %}
+</div>
+{% else %}
+<p class="hint">Слотів ще не видано.</p>
+{% endif %}
+{% endmacro %}

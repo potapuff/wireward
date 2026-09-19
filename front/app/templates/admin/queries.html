@@ -1,0 +1,117 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Останні запити — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>Останні запити</h1>
+  <div class="live"><span id="dot" class="dot"></span><span id="livetext">живий потік</span></div>
+</div>
+
+<form class="filters" method="get" action="/admin/queries">
+  <label>Період
+    <select name="days">
+      {% for k, v in periods.items() %}
+        <option value="{{ k }}" {{ 'selected' if k == days }}>{{ v }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Тип
+    <select name="kind">
+      <option value="">усі</option>
+      {% for k in ['select','insert','update','delete','ddl','tcl','copy','other'] %}
+        <option value="{{ k }}" {{ 'selected' if k == kind }}>{{ k }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label>Група
+    <select name="group">
+      <option value="">усі</option>
+      {% for g in groups %}
+        <option value="{{ g }}" {{ 'selected' if g == group }}>{{ g }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <label class="check">
+    <input type="checkbox" name="errors" value="1" {{ 'checked' if errors }}>
+    лише помилки
+  </label>
+  <label class="check">
+    <input type="checkbox" name="service" value="1" {{ 'checked' if service }}>
+    показати службові
+  </label>
+  <button>Показати</button>
+</form>
+
+<div class="scroll">
+<table class="grid queries">
+  <thead>
+    <tr><th>Час</th><th>Студент</th><th class="num">мс</th><th class="num">рядків</th><th>Запит</th></tr>
+  </thead>
+  <tbody id="rows">
+  {% for r in rows %}
+    <tr class="{{ 'err' if r.status == 'error' }}{{ ' service' if r.is_service }}">
+      <td class="num mono">{{ r.started_at.strftime('%H:%M:%S') }}</td>
+      <td><a href="/admin/student/{{ r.student_id }}">{{ r.display_name or '—' }}</a></td>
+      <td class="num">{{ r.duration_ms | round(1) }}</td>
+      <td class="num">{{ r.rows_affected if r.rows_affected is not none else '—' }}</td>
+      {{ a.sqlcell(r) }}
+    </tr>
+  {% else %}
+    <tr><td colspan="5" class="hint">За цей період записів немає.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<p class="hint foot-note">
+  Службові запити клієнта — звернення до <code>pg_catalog</code> при розкритті
+  дерева обʼєктів і розмова драйвера із сервером (<code>SHOW TRANSACTION
+  ISOLATION LEVEL</code> DataGrip шле перед кожним запитом студента) — за
+  замовчуванням сховані, але <b>збережені</b>: галочка «показати службові»
+  повертає їх на екран. Так зроблено навмисно — <code>select * from
+  pg_class</code> у курсі баз даних є нормальною вправою, і викидати такі
+  запити означало б втрачати роботу студента непомітно. Помилки видно завжди.
+</p>
+
+<script>
+(function () {
+  const rows = document.getElementById('rows');
+  const dot = document.getElementById('dot');
+  const text = document.getElementById('livetext');
+  const p = new URLSearchParams(location.search);
+  const q = new URLSearchParams({
+    after: {{ last_id }},
+    errors: p.get('errors') || 0,
+    kind: p.get('kind') || '',
+    group: p.get('group') || '',
+    service: p.get('service') || 0
+  });
+  const es = new EventSource('/admin/queries/stream?' + q);
+  es.onopen = () => { dot.className = 'dot on'; text.textContent = 'живий потік'; };
+  es.onerror = () => { dot.className = 'dot off'; text.textContent = 'потік перервано'; };
+  es.onmessage = (e) => {
+    const d = JSON.parse(e.data);
+    const tr = document.createElement('tr');
+    tr.className = 'fresh' + (d.status === 'error' ? ' err' : '') +
+                   (d.is_service ? ' service' : '');
+    const esc = (s) => String(s).replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]));
+    tr.innerHTML =
+      '<td class="num mono">' + esc(d.at) + '</td>' +
+      '<td><a href="/admin/student/' + esc(d.student_id) + '">' + esc(d.student) + '</a></td>' +
+      '<td class="num">' + d.ms.toFixed(1) + '</td>' +
+      '<td class="num">' + (d.rows === null ? '—' : d.rows) + '</td>' +
+      '<td class="sql"><code>' + esc(d.sql) + '</code>' +
+      (d.status === 'error'
+        ? '<span class="errline"><b>' + esc(d.sqlstate) + '</b> ' + esc(d.error) + '</span>'
+        : '') + '</td>';
+    const empty = rows.querySelector('td[colspan]');
+    if (empty) rows.innerHTML = '';
+    rows.prepend(tr);
+    while (rows.children.length > 300) rows.lastElementChild.remove();
+  };
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+/secrets/*
+!/secrets/.gitkeep
+.env
+*.pyc
+__pycache__/
+/pgproxy/bin/
+/pgproxy/.gocache/
+/data/
+/backups/
+/dist/
+
+# Роботи студентів (справжні лабораторні кладуться поруч із example.md).
+labs/*.md
+!labs/example.md
+labs/labs*/

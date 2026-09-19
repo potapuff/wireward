@@ -1,0 +1,65 @@
+# =============================================================================
+# Накладка для перевірки офсайт-бекапу (ADR-022) без жодного хмарного доступу.
+#
+#   docker compose -f compose.yaml -f compose.test.yaml --profile restore up -d
+#
+# Простіше — `make test-backup-s3`, який робить повний цикл і прибирає за собою.
+#
+# Чому окремим файлом, а не профілем у compose.yaml: MinIO не має жодного
+# стосунку до продукту, і в `docker compose config` бойового стека його не має
+# бути навіть як вимкненого сервісу. Заразом файл — це готовий зразок того, як
+# виглядає УВІМКНЕНИЙ офсайт: ті самі три змінні, тільки адреса інша.
+# =============================================================================
+services:
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    container_name: observer-minio
+    profiles: ["test"]
+    # Ті самі файли секретів, що й у wal-g: тестове сховище приймає рівно ті
+    # ключі, які кластер має в secrets/. Реальних ключів у тесті немає ніколи —
+    # якщо secrets/s3_* уже заповнені бойовими, тест піде до MinIO з ними, і це
+    # єдиний випадок, коли бойовий ключ покидає .env. Тому на сервері тест не
+    # ганяють (див. ADR-022).
+    environment:
+      MINIO_ROOT_USER_FILE: /run/secrets/s3_access_key
+      MINIO_ROOT_PASSWORD_FILE: /run/secrets/s3_secret_key
+      MINIO_UPDATE: "off"
+    secrets:
+      - s3_access_key
+      - s3_secret_key
+    command: ["server", "/data", "--console-address", ":9001"]
+    volumes:
+      - miniodata:/data
+    networks:
+      - offsite
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    mem_limit: 512m
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "1" }
+
+  # Ті самі змінні, що на сервері вкажуть на справжнє сховище. Перезапуск
+  # postgres із цією накладкою вмикає archive_mode = on (див. entrypoint.sh).
+  postgres:
+    environment:
+      WALG_S3_PREFIX: s3://observer-backup
+      AWS_ENDPOINT: http://minio:9000
+      AWS_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: "true"
+
+  pg-restore:
+    environment:
+      WALG_S3_PREFIX: s3://observer-backup
+      AWS_ENDPOINT: http://minio:9000
+      AWS_REGION: us-east-1
+      AWS_S3_FORCE_PATH_STYLE: "true"
+
+volumes:
+  miniodata:

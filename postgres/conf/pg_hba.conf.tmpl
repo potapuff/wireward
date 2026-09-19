@@ -1,0 +1,40 @@
+# =============================================================================
+# Observer · pg_hba.conf (шаблон; ${...} підставляє 00-cluster.sh)
+# Принцип: до баз студентів мережею йдуть рівно два канали, кожен прибитий до
+# однієї конкретної адреси — pgproxy (SQL студента, журналюється) і
+# obs_maintenance з front (адмінське обслуговування, даних не читає). Усе інше
+# ззовні — reject.
+# =============================================================================
+# TYPE  DATABASE        USER              ADDRESS            METHOD
+
+local   all             postgres                             trust
+
+# Unix-сокет усередині контейнера — для адміністрування, провізіонінгу і тестів.
+# Поверхню атаки не розширює: щоб сюди дістатися, треба вже мати `docker exec`,
+# тобто фактично права root на хості. Мережевий доступ це не відкриває взагалі.
+local   all             all                                  scram-sha-256
+
+# Провізіонінг: створення ролей і баз. Тільки з адреси front.
+host    postgres        obs_provisioner   ${FRONT_IP}/32     scram-sha-256
+host    all             obs_provisioner   ${FRONT_IP}/32     scram-sha-256
+
+# Обслуговування баз студентів з адмінки (З15б): VACUUM ANALYZE напряму,
+# минаючи pgproxy — як і провізіонінг. DATABASE тут `all` вимушено: pg_hba не
+# знає шаблонів на кшталт db_*, а перелічувати бази поіменно й дописувати рядок
+# на кожного нового студента — це рівно той спосіб, яким доступ тихо
+# розсинхронізується. Реальне обмеження дає ACL: CONNECT видано окремо на кожну
+# персональну базу студента (provision_student.sql), а сама роль уміє тільки
+# обслуговування (pg_maintain: VACUUM, ANALYZE, CLUSTER, REINDEX,
+# REFRESH MATERIALIZED VIEW, LOCK TABLE) і не читає даних.
+host    all             obs_maintenance   ${FRONT_IP}/32     scram-sha-256
+
+# Застосунок і shipper — тільки до бази observer.
+host    observer        obs_app           ${FRONT_IP}/32     scram-sha-256
+host    observer        obs_shipper       ${PGPROXY_IP}/32   scram-sha-256
+
+# Бекенд-зʼєднання pgproxy від імені ролей студентів (u_*).
+# Єдиний рядок, що дає доступ до навчальних баз, — і він прибитий до адреси проксі.
+host    all             all               ${PGPROXY_IP}/32   scram-sha-256
+
+# Усе інше — заборонено.
+host    all             all               0.0.0.0/0          reject

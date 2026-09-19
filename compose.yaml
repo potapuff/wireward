@@ -1,0 +1,456 @@
+name: observer
+
+services:
+  postgres:
+    build:
+      context: ./postgres
+      args:
+        OBSERVER_TS_SLOTS: ${OBSERVER_TS_SLOTS:-150}
+    container_name: observer-postgres
+    restart: unless-stopped
+    stop_grace_period: 30s
+    environment:
+      # PG 18: офіційний образ переніс PGDATA у /var/lib/postgresql/18/docker,
+      # а VOLUME — на /var/lib/postgresql. Задаємо явно, щоб том не залежав
+      # від мажорної версії образу і не «загубився» при оновленні.
+      PGDATA: /var/lib/postgresql/data/pgdata
+      POSTGRES_DB: observer
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD_FILE: /run/secrets/pg_superuser_password
+      POSTGRES_INITDB_ARGS: "--data-checksums --encoding=UTF8 --locale=C.UTF-8"
+      OBSERVER_TS_SLOTS: ${OBSERVER_TS_SLOTS:-150}
+      OBSERVER_QUOTA_BYTES: ${OBSERVER_QUOTA_BYTES:-52428800}
+      DATA_SUBNET: ${DATA_SUBNET:-172.29.0.0/24}
+      # Офсайт-бекап фізичного кластера (ADR-022). ПОРОЖНІЙ WALG_S3_PREFIX —
+      # робочий стан за замовчуванням: entrypoint рендерить archive_mode = off
+      # і WAL переробляється як завжди. Тільки-но тут з'явиться адреса сховища,
+      # кластер починає архівувати. Ключі доступу — у secrets, не тут.
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      # MinIO і більшість не-AWS сховищ адресують бакет шляхом, а не піддоменом.
+      AWS_S3_FORCE_PATH_STYLE: ${AWS_S3_FORCE_PATH_STYLE:-true}
+      WALG_COMPRESSION_METHOD: ${WALG_COMPRESSION_METHOD:-lz4}
+      # Конкурентність тримаємо низькою свідомо: 4 ГБ на всю машину, і бекап не
+      # має конкурувати з кластером за пам'ять і канал.
+      WALG_UPLOAD_CONCURRENCY: ${WALG_UPLOAD_CONCURRENCY:-2}
+      WALG_DOWNLOAD_CONCURRENCY: ${WALG_DOWNLOAD_CONCURRENCY:-2}
+    secrets:
+      - pg_superuser_password
+      - pg_provisioner_password
+      - pg_app_password
+      - pg_shipper_password
+      # З15б: роль obs_maintenance створює initdb/00-roles.sh — тобто пароль
+      # потрібен саме тут, у кластері, а не лише фронту.
+      - pg_maintenance_password
+      - s3_access_key
+      - s3_secret_key
+      # Без нього обгортка walg відмовляється працювати: копія всього кластера
+      # у чужому сховищі не має лежати відкритим текстом (ADR-022).
+      - walg_libsodium_key
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Окремий том під tablespace'и студентів: саме на ньому діє project quota
+      # файлової системи. Дані Wireward і WAL лежать поза ним — це навмисно,
+      # щоб вичерпана квота студента не могла зачепити WAL. Див. docs/05-security.md.
+      - pgts:/srv/pgts
+      # Шаблони провізіонінгу і тести — read-only. Потрібні всередині контейнера,
+      # бо порт 5432 назовні не публікується і з хоста до кластера не дістатися.
+      - ./postgres/sql:/srv/observer/postgres/sql:ro
+      - ./scripts:/srv/observer/scripts:ro
+    networks:
+      data:
+        ipv4_address: 172.29.0.2
+      # Єдиний вихід кластера «назовні» — до сховища бекапів (ADR-022). Типово
+      # мережа теж internal, тобто виходу немає: увімкнення офсайту — це
+      # свідомі два рядки в .env (WALG_S3_PREFIX + OFFSITE_INTERNAL=false),
+      # а не побічний ефект оновлення compose.
+      offsite:
+    healthcheck:
+      # pg_isready тут НЕ достатньо. Якщо initdb-скрипт упав, контейнер
+      # перезапускається, PGDATA вже існує, ініціалізація пропускається — і
+      # напівпорожній кластер бадьоро відповідає, що він здоровий.
+      # Тому перевіряємо ще й наявність слотів, тобто що всі три кроки
+      # ініціалізації дійшли до кінця. (Знайдено при першому підйомі.)
+      test: ["CMD-SHELL", "pg_isready -U postgres -d observer -q && psql -U postgres -d observer -tAXc 'select 1 from obs.ts_slots limit 1' >/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 40s
+    shm_size: 256mb
+    mem_limit: 2560m
+    # Кластер пише лише у свої томи; корінь образу можна закрити. Два каталоги
+    # лишаються записуваними через tmpfs: /var/run/postgresql (там сокет і
+    # pid-файл, і вони НЕ в томі) та /tmp (тимчасові файли сортувань).
+    read_only: true
+    tmpfs:
+      - /var/run/postgresql:size=16m,mode=1777
+      - /tmp:size=256m,mode=1777
+      # Робочі конфіги: entrypoint розкладає їх сюди зі зразків образу при
+      # кожному старті, бо pg_hba.conf треба рендерити (адреси front і проксі).
+      - /etc/postgresql:size=1m,mode=0755
+    # Точка входу образу стартує від root і скидається на uid 999. На це
+    # потрібні п'ять прав, і DAC_OVERRIDE серед них — не наш вибір: штатний
+    # docker-entrypoint.sh обходить каталог даних (0700, власник postgres) ще
+    # від root. Знімається все інше — NET_RAW, NET_BIND_SERVICE, MKNOD,
+    # SYS_CHROOT, AUDIT_WRITE і решта типового набору, якого кластеру не треба.
+    cap_drop: [ALL]
+    cap_add: [CHOWN, DAC_OVERRIDE, SETUID, SETGID, FOWNER]
+    security_opt:
+      - no-new-privileges:true
+    # З21: без ліміту студентський флуд з'єднань (кожне — окремий backend-
+    # процес) необмежено росте разом із хостом. Захист — pids_limit
+    # (cgroup, рахує всі задачі контейнера незалежно від UID). УВАГА:
+    # ulimits.nproc свідомо НЕ додано тут — RLIMIT_NPROC рахується по
+    # (user_ns, uid) в межах усього хоста, а точка входу образу і healthcheck
+    # виконуються від root (uid 0, спільний з іншими контейнерами хоста, не
+    # лише нашими) — на завантаженому сервері чужі root-задачі можуть забрати
+    # ліміт і викликати fork-фейл на старті чи healthcheck, що виглядає як
+    # випадковий EAGAIN. nofile — ліміт НА ПРОЦЕС (кожен backend отримує
+    # свої 65536, це не спільний бюджет контейнера): все одно щедро понад
+    # `max_files_per_process = 1000`, тобто не впирається в звичайне
+    # навантаження (COPY, великі результати), але вже не unlimited.
+    # pids_limit: реальна стеля — 140 (max_connections) + 4
+    # (max_worker_processes) + 2 (autovacuum_max_workers) + ~6 службових
+    # (postmaster, bgwriter, checkpointer, walwriter, stats) ≈ 152-160, плюс
+    # короткочасні healthcheck і walg archive_command. 300 — це запас ~2×
+    # від реальної бази, а не від округленої вниз оцінки.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    pids_limit: 300
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # Порожній кластер, у який відновлюється фізична копія з S3 (ADR-022).
+  # Профіль `restore`: не піднімається ні локально, ні на сервері — його
+  # запускають `scripts/restore-s3.sh` і `make test-backup-s3`.
+  #
+  # Свій образ не збирає: бере вже зібраний образ сервісу postgres (там і
+  # wal-g, і обгортка). Точка входу підмінена на sleep — кластер тут
+  # стартує не docker-entrypoint, а скрипт відновлення, покроково.
+  pg-restore:
+    image: observer-postgres
+    container_name: observer-pg-restore
+    profiles: ["restore"]
+    entrypoint: ["sleep", "infinity"]
+    environment:
+      PGDATA: /var/lib/postgresql/data/pgdata
+      WALG_S3_PREFIX: ${WALG_S3_PREFIX:-}
+      AWS_ENDPOINT: ${AWS_ENDPOINT:-}
+      AWS_REGION: ${AWS_REGION:-us-east-1}
+      AWS_S3_FORCE_PATH_STYLE: ${AWS_S3_FORCE_PATH_STYLE:-true}
+      WALG_DOWNLOAD_CONCURRENCY: ${WALG_DOWNLOAD_CONCURRENCY:-2}
+    secrets:
+      - s3_access_key
+      - s3_secret_key
+      # Без нього обгортка walg відмовляється працювати: копія всього кластера
+      # у чужому сховищі не має лежати відкритим текстом (ADR-022).
+      - walg_libsodium_key
+    volumes:
+      - pgrestore:/var/lib/postgresql/data
+      # Фізична копія тягне за собою й tablespace'и студентів (їх шляхи
+      # прописані в самому кластері), тож дзеркало /srv/pgts тут обов'язкове —
+      # інакше вони лягли б у шар контейнера, а не в том.
+      - pgrestore_ts:/srv/pgts
+    networks:
+      - offsite
+    mem_limit: 1024m
+    security_opt:
+      - no-new-privileges:true
+    # З21: той самий образ postgres, той самий UID 999 у тому самому user
+    # namespace хоста — під час `test-backup-s3`/`restore-s3.sh` цей
+    # контейнер піднімається поруч із живим `postgres`, і без власного
+    # pids_limit його процеси рахувалися б у ЖИВОГО кластера RLIMIT_NPROC,
+    # якби він там був заданий (саме тому postgres його не має — див.
+    # docs/05-security.md).
+    pids_limit: 300
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  front:
+    build:
+      context: ./front
+      # Джерело значень — git на хості (make up їх експортує), не .git
+      # усередині образу: контейнер його не має.
+      args:
+        BUILD_COMMIT: ${BUILD_COMMIT:-dev}
+        BUILD_DATE: ${BUILD_DATE:-}
+    container_name: observer-front
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      PGHOST: postgres
+      PGPORT: 5432
+      OIDC_ISSUER: ${OIDC_ISSUER:-}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-}
+      OIDC_SCOPES: ${OIDC_SCOPES:-openid profile}
+      OIDC_REDIRECT_URI: ${OIDC_REDIRECT_URI:-}
+      OIDC_AUTHORIZE_ENDPOINT: ${OIDC_AUTHORIZE_ENDPOINT:-}
+      OIDC_TOKEN_ENDPOINT: ${OIDC_TOKEN_ENDPOINT:-}
+      OIDC_USERINFO_ENDPOINT: ${OIDC_USERINFO_ENDPOINT:-}
+      PUBLIC_DB_HOST: ${PUBLIC_DB_HOST:-localhost}
+      PGPROXY_PORT_PRIMARY: ${PGPROXY_PORT_PRIMARY:-55432}
+      PGPROXY_PORT_FALLBACK: ${PGPROXY_PORT_FALLBACK:-8080}
+      DB_TOKEN_TTL_DAYS: ${DB_TOKEN_TTL_DAYS:-180}
+      # Вхід в обхід Mix. На сервері має бути 0 або відсутнім.
+      DEV_LOGIN_ENABLED: ${DEV_LOGIN_ENABLED:-0}
+      # Тільки для локальної роботи по http. На сервері — 1 (за замовчуванням).
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-1}
+    secrets:
+      - pg_app_password
+      - pg_provisioner_password
+      - pg_maintenance_password
+      - master_secret
+      - session_secret
+      - oidc_client_secret
+    networks:
+      data:
+        ipv4_address: 172.29.0.11   # під цю адресу виписаний pg_hba.conf
+      edge:
+    ports:
+      # ЛИШЕ на 127.0.0.1: назовні front виходить через caddy і тільки по TLS.
+      # Рядок лишається і на сервері — він корисний для curl з самої машини.
+      - "127.0.0.1:${FRONT_DEV_PORT:-8001}:8000"
+    # Застосунок нічого не пише на диск: журнал у базі, секрети монтуються
+    # лише на читання. /tmp лишається як tmpfs — Python і uvicorn туди
+    # інколи пишуть, і падати через це на сервері не варто.
+    read_only: true
+    cap_drop: [ALL]
+    tmpfs:
+      - /tmp:size=32m,mode=1777
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/healthz',timeout=3).status==200 else 1)\""]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    mem_limit: 384m
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  pgproxy:
+    build: ./pgproxy
+    container_name: observer-pgproxy
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      BACKEND_HOST: postgres
+      BACKEND_PORT: 5432
+      PGPROXY_PORT_PRIMARY: 55432
+      PGPROXY_PORT_FALLBACK: 8080
+      PROXY_MAX_BACKENDS: ${PROXY_MAX_BACKENDS:-100}
+      PROXY_STATEMENT_TIMEOUT_MS: ${PROXY_STATEMENT_TIMEOUT_MS:-30000}
+      # Аварійний режим: чистий форвардер. Журнал при цьому ПОРОЖНІЙ (ADR-002).
+      PROXY_PASSTHROUGH: ${PROXY_PASSTHROUGH:-0}
+      PGPROXY_DEBUG: ${PGPROXY_DEBUG:-0}
+      PGPROXY_POOL_MAX: ${PGPROXY_POOL_MAX:-8}
+      PGPROXY_VERIFY_PARALLEL: ${PGPROXY_VERIFY_PARALLEL:-3}
+      # Обмежувач входу: невдалих спроб на ОДНУ роль за хвилину і на скільки
+      # секунд роль після цього замикається.
+      PGPROXY_LOGIN_FAILS: ${PGPROXY_LOGIN_FAILS:-10}
+      PGPROXY_LOGIN_BLOCK_SEC: ${PGPROXY_LOGIN_BLOCK_SEC:-60}
+    secrets:
+      - master_secret
+      - pg_shipper_password
+    volumes:
+      # Spool журналу і TLS-сертифікат переживають перезапуск контейнера:
+      # незакинуті в базу записи не мають зникати разом із ним.
+      - pgproxy_state:/var/lib/pgproxy
+    networks:
+      data:
+        ipv4_address: 172.29.0.10   # під цю адресу виписаний pg_hba.conf
+      edge:
+    ports:
+      - "${PGPROXY_PORT_PRIMARY:-55432}:55432"
+      - "${PGPROXY_PORT_FALLBACK:-8080}:8080"
+    mem_limit: 256m
+    # Проксі пише лише у свій том (spool і сертифікат), тому корінь можна
+    # закрити. Жодної привілейованої дії він не робить: слухає порти > 1024
+    # і ходить у мережу — на це capabilities не потрібні.
+    read_only: true
+    cap_drop: [ALL]
+    security_opt:
+      - no-new-privileges:true
+    # З21: proxy не форкає процесів (Go, goroutines на пул ОС-потоків), тож
+    # головний ризик тут — не форк-бомба, а вичерпання дескрипторів. Рахувати
+    # від PROXY_MAX_BACKENDS=100 (стеля вже АВТЕНТИФІКОВАНИХ з'єднань до
+    # бекенда) — помилка: сокет тримається з моменту accept(), а не з моменту
+    # проходження семафора — рукостискання (до 5с) і черга на бекенд (до
+    # 10с) тримають дескриптори студентів, яких семафор ще не порахував.
+    # 20000 — з запасом на флуд перепідключень (сотні/с на короткий час), а
+    # не на усталений PROXY_MAX_BACKENDS. Другий шар — сам accept-loop
+    # (proxy.go) робить backoff на помилці Accept, а не крутиться на 100%
+    # CPU: без цього вичерпання nofile перетворювалось би на busy-loop,
+    # який заливає лог (json-file 10МБ×3) швидше, ніж встигнеш побачити
+    # причину інциденту.
+    ulimits:
+      nproc: 128
+      nofile:
+        soft: 20000
+        hard: 20000
+    pids_limit: 128
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # Єдиний сервіс із портами 80/443. Профіль `server`: локально не потрібен і
+  # не піднімається (`docker compose up -d`), на сервері —
+  # `docker compose --profile server up -d`.
+  caddy:
+    image: caddy:2-alpine
+    container_name: observer-caddy
+    profiles: ["server"]
+    restart: unless-stopped
+    depends_on:
+      front:
+        condition: service_healthy
+    environment:
+      # Публічне імʼя. Обовʼязкове для профілю server, але БЕЗ `:?` —
+      # інтерполяція в compose відбувається незалежно від профілю, і суворий
+      # варіант ламав би кожну локальну команду `docker compose`.
+      WEB_HOST: ${WEB_HOST:-observer.local}
+      ACME_EMAIL: ${ACME_EMAIL:-}
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      # Сертифікати мають пережити перезапуск: інакше кожен `up` — це нова
+      # видача, і ліміт Let's Encrypt закінчується швидше, ніж здається.
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    networks:
+      - edge
+    ports:
+      - "80:80"
+      - "443:443"
+    mem_limit: 128m
+    # Сертифікати й конфіг — у томах, тому корінь можна закрити; /tmp лишається
+    # tmpfs. З прав потрібне єдине: слухати 80 і 443, тобто порти нижче 1024.
+    read_only: true
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  # HTTPS для локальної розробки, без ACME й публічного імені. Сертифікат —
+  # власна локальна CA Caddy (самопідписаний). 8443, а не 443: на машині
+  # розробки 443 вже тримає nginx LMS Mix (docs/10-deploy.md). Профіль `dev`:
+  # `docker compose --profile dev up -d caddy-dev`.
+  caddy-dev:
+    image: caddy:2-alpine
+    container_name: observer-caddy-dev
+    profiles: ["dev"]
+    restart: unless-stopped
+    depends_on:
+      front:
+        condition: service_healthy
+    volumes:
+      - ./caddy/Caddyfile.dev:/etc/caddy/Caddyfile:ro
+      - caddy_dev_data:/data
+      - caddy_dev_config:/config
+    networks:
+      - edge
+    ports:
+      - "127.0.0.1:8443:8443"
+    mem_limit: 128m
+    read_only: true
+    # NET_BIND_SERVICE потрібен не через порт (8443 > 1024), а тому що
+    # бінарник caddy в образі несе файлову capability cap_net_bind_service
+    # (setcap): без неї в bounding set ядро відмовляє в exec узагалі —
+    # "operation not permitted" ще до першої стрічки логу.
+    cap_drop: [ALL]
+    cap_add: [NET_BIND_SERVICE]
+    tmpfs:
+      - /tmp:size=16m,mode=1777
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+networks:
+  data:
+    driver: bridge
+    # postgres не має виходу назовні взагалі: єдиний шлях до даних студента —
+    # через pgproxy, тому обійти журнал ззовні неможливо.
+    internal: true
+    ipam:
+      config:
+        - subnet: ${DATA_SUBNET:-172.29.0.0/24}
+  edge:
+    driver: bridge
+  # Мережа під офсайт-бекап: у ній живуть postgres, pg-restore і (у тесті)
+  # MinIO. `internal: true` за замовчуванням — кластер не має виходу в
+  # інтернет, як і раніше; тест із MinIO працює й так, бо це обмін між
+  # контейнерами. Для справжнього S3 у .env ставиться OFFSITE_INTERNAL=false.
+  offsite:
+    driver: bridge
+    internal: ${OFFSITE_INTERNAL:-true}
+
+volumes:
+  pgdata:
+  pgts:
+  # Том під відновлений кластер (профіль `restore`). Живе окремо від pgdata
+  # навмисно: перевірка відновлення не має жодної можливості записати щось у
+  # робочі дані, навіть помилково.
+  pgrestore:
+  pgrestore_ts:
+  pgproxy_state:
+  caddy_data:
+  caddy_config:
+  caddy_logs:
+  caddy_dev_data:
+  caddy_dev_config:
+
+secrets:
+  pg_superuser_password:
+    file: ./secrets/pg_superuser_password
+  pg_provisioner_password:
+    file: ./secrets/pg_provisioner_password
+  pg_app_password:
+    file: ./secrets/pg_app_password
+  # Роль obs_maintenance (член pg_maintain) — примусовий VACUUM ANALYZE на
+  # персональній базі студента з адмінки (З15б). Front підключається нею
+  # НАПРЯМУ до бази студента, минаючи pgproxy — так само, як obs_app/
+  # obs_provisioner.
+  pg_maintenance_password:
+    file: ./secrets/pg_maintenance_password
+  pg_shipper_password:
+    file: ./secrets/pg_shipper_password
+  # Ключі до S3-сумісного сховища бекапів (ADR-022). Локально `make secrets`
+  # генерує випадкову пару — нею ж користується тестовий MinIO, тож тест
+  # ніколи не працює з бойовими ключами. На сервері обидва файли
+  # перезаписуються ключами реального сховища.
+  s3_access_key:
+    file: ./secrets/s3_access_key
+  s3_secret_key:
+    file: ./secrets/s3_secret_key
+  # Ключ шифрування копій (libsodium, 32 байти). Той самий файл потрібен і для
+  # відновлення: без нього копія — просто шум. Тому його місце не тут, а
+  # ЩЕ Й десь поза сервером (docs/10-deploy.md §6б).
+  walg_libsodium_key:
+    file: ./secrets/walg_libsodium_key
+  master_secret:
+    file: ./secrets/master_secret
+  session_secret:
+    file: ./secrets/session_secret
+  # Порожній файл — цілком робочий стан: Doorkeeper з PKCE приймає публічного
+  # клієнта без секрету (front/app/config.py, optional_secret). Заповнюється
+  # лише якщо клієнт у Mix зареєстрований як конфіденційний.
+  oidc_client_secret:
+    file: ./secrets/oidc_client_secret

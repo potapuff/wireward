@@ -1,0 +1,65 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Запит #{{ q.id }} — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+<h1>Запит #{{ q.id }}</h1>
+
+<p class="hint">Постійне посилання на один рядок журналу — щоб на захисті
+   відкрити саме його, а не шукати очима серед тисяч.</p>
+
+<table class="kv">
+  <tr><th>Студент</th><td><a href="/admin/student/{{ q.student_id }}">{{ q.student_name }}</a></td></tr>
+  <tr><th>Коли</th><td>{{ q.started_at.strftime('%d.%m.%Y %H:%M:%S') }}</td></tr>
+  <tr><th>Тривалість</th><td>{{ '%.1f' | format(q.duration_ms) }} мс</td></tr>
+  <tr><th>Протокол</th><td>{{ q.protocol }}, {{ q.sql_kind }}</td></tr>
+  <tr><th>Стан</th><td>{{ 'помилка' if q.status == 'error' else 'виконано' }}
+      {% if q.sqlstate %}<span class="mono">{{ q.sqlstate }}</span>{% endif %}</td></tr>
+  {% if q.rows_affected is not none %}
+  <tr><th>Рядків</th><td>{{ q.rows_affected }}</td></tr>{% endif %}
+  {% if q.is_catalog or q.is_service %}
+  <tr><th>Службовий</th><td>так — запит клієнта, а не студента</td></tr>{% endif %}
+</table>
+
+<section class="block">
+  <h2>Запит</h2>
+  <pre class="copyable">{{ q.sql_text }}</pre>
+  {% if q.error_message %}
+    <p class="errline">{{ q.error_message }}{% if q.error_position %},
+       позиція {{ q.error_position }}{% endif %}</p>
+  {% endif %}
+  <p class="hint">Відбиток: <span class="mono">{{ q.sql_fingerprint }}</span></p>
+</section>
+
+{% if rules %}
+<section class="block">
+  <h2>На що звернути увагу</h2>
+  <p class="hint">Помилки, яких СУБД не помічає: запит виконався, результат не той.</p>
+  {% for r in rules %}
+    <p><b>{{ r.title }}</b> — {{ r.explanation }}</p>
+  {% endfor %}
+</section>
+{% endif %}
+
+{% if same | length > 1 %}
+<section class="block">
+  <h2>Той самий відбиток у цього студента</h2>
+  <p class="hint">Один рядок журналу майже завжди читається в компанії:
+     скільки разів це саме падало до і після.</p>
+  <table class="grid">
+    <thead><tr><th>Коли</th><th>Стан</th><th></th></tr></thead>
+    <tbody>
+    {% for r in same %}
+      <tr class="{{ 'err' if r.status == 'error' }}">
+        <td>{{ r.started_at.strftime('%d.%m %H:%M:%S') }}</td>
+        <td>{{ r.sqlstate or 'ok' }}</td>
+        <td>{% if r.id != q.id %}<a href="/admin/query/{{ r.id }}">відкрити</a>
+            {% else %}<b>цей</b>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+{% endblock %}

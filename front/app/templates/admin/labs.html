@@ -1,0 +1,76 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Лабораторні — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+<h1>Лабораторні</h1>
+
+<p class="hint">
+  Лабораторна тут — <b>не період у часі</b>, а набір зразків. Студенти
+  приходять до неї коли завгодно й повертаються, тому робота над лабою
+  визначається змістом запитів, а не тим, коли вони виконані. Зразок не
+  зобовʼязує студента написати так само: збіг рахується нечітко, за перетином
+  таблиць, конструкцій і колонок.
+</p>
+
+{% if labs %}
+<table class="grid">
+  <thead><tr><th>Лабораторна</th><th>Групи</th><th class="num">зразків</th>
+             <th class="num">заборон</th><th class="num">поріг</th></tr></thead>
+  <tbody>
+  {% for l in labs %}
+    <tr class="{{ 'service' if l.archived_at }}">
+      <td><a href="/admin/lab/{{ l.id }}"><b>{{ l.title }}</b></a>
+          {% if l.note %}<span class="errline">{{ l.note }}</span>{% endif %}</td>
+      <td>{{ l.groups | join(', ') if l.groups else '—' }}</td>
+      <td class="num">{{ l.expectations }}</td>
+      <td class="num">{{ l.forbidden }}</td>
+      <td class="num">{{ '%.2f' | format(l.threshold) }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p class="hint">Жодної лабораторної ще не заведено.</p>
+{% endif %}
+
+{% if request.state.is_admin %}
+<section class="block">
+  <h2>Нова лабораторна</h2>
+  <form method="post" action="/admin/labs" class="labform">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <label>Назва<input type="text" name="title" required></label>
+    <label>Примітка<input type="text" name="note"></label>
+
+    <label>Групи
+      <select name="groups" multiple size="4">
+        {% for g in groups %}<option value="{{ g }}">{{ g }}</option>{% endfor %}
+      </select>
+    </label>
+
+    <label>Поріг схожості
+      <input type="number" name="threshold" value="0.5" min="0.05" max="1" step="0.05">
+      <span class="hint">Нижче — ширше захоплення, більше зайвого. Вище — навпаки.</span>
+    </label>
+
+    <label>Очікувані запити
+      <textarea name="samples" rows="10" placeholder="Один запит — один блок.&#10;Блоки розділяються ПОРОЖНІМ РЯДКОМ.&#10;&#10;select c.name, count(*) from customers c join orders o on o.customer_id = c.id group by c.name&#10;&#10;select * from orders where total > 1000"></textarea>
+      <span class="hint">Перелік може бути частковим: студентські розвʼязки не
+        збігаються зі зразком один в один, і збіг рахується нечітко.</span>
+    </label>
+
+    <fieldset>
+      <legend>Чого бути не повинно</legend>
+      <div class="checks">
+      {% for code, title in constructs.items() %}
+        <label class="check"><input type="checkbox" name="forbidden" value="{{ code }}"> {{ title }}</label>
+      {% endfor %}
+      </div>
+    </fieldset>
+
+    <button>Створити</button>
+  </form>
+</section>
+{% endif %}
+{% endblock %}

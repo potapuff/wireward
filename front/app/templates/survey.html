@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Анкета{% endtrans %} — Wireward{% endblock %}
+
+{% block nav %}
+  <a href="/cabinet">{% trans %}Моя база{% endtrans %}</a>
+{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>{% trans %}Дві короткі анкети{% endtrans %}</h1>
+  <p>{% trans %}Перша — про <b>засіб</b>: чи зручно ним користуватися. Друга — про
+     <b>вашу роботу</b>. Разом хвилин пʼять.{% endtrans %}</p>
+  <p class="hint">{% trans %}Відповіді не впливають на оцінку й не показуються поіменно.
+     Заповнити можна незалежно від того, чи погодилися ви на участь у
+     дослідженні: відмова від участі не забирає право сказати, що засіб
+     незручний.{% endtrans %}</p>
+  {% if saved %}<p class="warn-text">{% trans %}Збережено. Дякую.{% endtrans %}</p>{% endif %}
+</section>
+
+<section class="card narrow">
+  <h2>{% trans %}Про засіб{% endtrans %}</h2>
+  {% if mine.sus %}
+    <p class="hint">{% trans %}Ви вже заповнювали{% endtrans %} {{ mine.sus.at.strftime('%d.%m.%Y') }}.
+       {% trans %}Можна відповісти заново — попередні відповіді буде замінено.{% endtrans %}</p>
+  {% endif %}
+  <form method="post" action="/survey/sus">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    {% for item in sus_items %}
+      {% set n = loop.index %}
+      <fieldset class="sus">
+        <legend>{{ n }}. {{ item }}</legend>
+        <div class="scale">
+          {% for label in sus_scale %}
+            <label class="opt">
+              <input type="radio" name="q{{ n }}" value="{{ loop.index }}" required
+                 {{ 'checked' if mine.sus and mine.sus.answers.get('q' ~ n) == loop.index }}>
+              <span>{{ loop.index }}</span><i>{{ label }}</i>
+            </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+    {% endfor %}
+    <button>{% trans %}Надіслати{% endtrans %}</button>
+  </form>
+</section>
+
+<section class="card narrow">
+  <h2>{% trans %}Про вашу роботу{% endtrans %}</h2>
+  {% if mine.reflection %}
+    <p class="hint">{% trans %}Ви вже відповідали{% endtrans %} {{ mine.reflection.at.strftime('%d.%m.%Y') }}.</p>
+  {% endif %}
+  <form method="post" action="/survey/reflection">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    {% for key, question in reflection_items.items() %}
+      <label>{{ question }}
+        <textarea name="{{ key }}" rows="3">{{ mine.reflection.answers.get(key, '') if mine.reflection else '' }}</textarea>
+      </label>
+    {% endfor %}
+    <button>{% trans %}Надіслати{% endtrans %}</button>
+  </form>
+</section>
+{% endblock %}

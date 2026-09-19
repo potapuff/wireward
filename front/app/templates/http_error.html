@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+{% block title %}{{ error_title }} — Wireward{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>{{ error_title }}</h1>
+  <p>{{ error_message }}</p>
+  <p><a class="button" href="/">{% trans %}На головну{% endtrans %}</a></p>
+</section>
+{% endblock %}

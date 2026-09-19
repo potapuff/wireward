@@ -1,0 +1,599 @@
+/* =============================================================================
+   Wireward — темна тема, wire-текстура, два акценти.
+   Джерело: docs/design/Wireward.dc.html (Claude Design).
+
+   Правила системи, від яких не відступаємо:
+   * тільки волосяні лінії (1 px, rgba(255,255,255,.1)) — жодних тіней;
+   * гострі кути; заокруглення лише там, де форма це вимагає (мітки, точки);
+   * рівно два акценти. Cyan (#5ad1c8) — дія і навігація, amber (#e8a13c) —
+     увага: помилки, попередження, руйнівні кнопки. Третього кольору немає
+     навмисно: щойно акцентів стає багато, жоден із них уже нічого не значить;
+   * числа — моноширинні з табличними цифрами, щоб колонки не «стрибали».
+   ============================================================================= */
+
+:root {
+  --bg: #08090b;          /* тло сторінки */
+  --card: #0e1114;        /* поверхня */
+  --ink: #eaeef1;
+  --ink-2: rgba(234, 238, 241, .72);
+  --ink-3: rgba(234, 238, 241, .45);
+  --line: rgba(255, 255, 255, .1);
+  --line-2: rgba(255, 255, 255, .06);
+  --accent: #5ad1c8;
+  --accent-hi: #8ee5de;
+  --amber: #e8a13c;
+  --danger: #e8a13c;
+  --warn: #e8a13c;
+  --ok: #5ad1c8;
+  --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+
+/* Wire-поле: сліди друкованої плати з рідкими cyan-вузлами. Використовується
+   лише на великих порожніх площинах (hero, шапка кабінету) — під текстом і
+   таблицями воно заважає. */
+.wirebg {
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><g fill='none' stroke='%23eaeef1' stroke-opacity='0.07'><path d='M0 24H104c8 0 12 4 12 12v124'/><path d='M160 116H56c-8 0-12-4-12-12V0'/><path d='M0 140h160'/><path d='M84 0v40c0 8 4 12 12 12h64'/></g><g fill='%235ad1c8' fill-opacity='0.22'><circle cx='116' cy='36' r='2.2'/><circle cx='44' cy='104' r='2.2'/><circle cx='96' cy='52' r='2.2'/></g></svg>");
+  background-repeat: repeat;
+}
+
+* { box-sizing: border-box; }
+
+html, body { height: 100%; }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font: 400 15px/1.65 var(--sans);
+  -webkit-font-smoothing: antialiased;
+  display: flex; flex-direction: column;
+}
+
+main { max-width: 860px; margin: 0 auto; padding: 30px 24px 72px; flex: 1 0 auto; width: 100%; }
+
+/* ------------------------------------------------------------------ шапка */
+.top {
+  display: flex; align-items: center; gap: 20px; flex-wrap: wrap;
+  padding: 18px 24px; border-bottom: 1px solid var(--line);
+}
+.brand {
+  display: inline-flex; align-items: center; gap: 9px;
+  font: 600 14px/1 var(--sans); letter-spacing: .02em;
+  text-decoration: none; color: var(--ink);
+}
+/* Знак марки: той самий глиф, що й favicon.svg — амбер, той-таки акцент,
+   яким позначені увага/помилки/руйнівні дії (style.css, шапка файлу). */
+.brand-mark { width: 13px; height: 13px; flex: none; color: var(--amber); }
+.top a { color: var(--ink-2); text-decoration: none; font-size: 12.5px; }
+.top a:hover { color: var(--ink); }
+.top .who { color: var(--ink-3); margin-left: auto; font-size: 12.5px; }
+.top a.on { color: var(--accent); }
+.langsw { font-size: 12.5px; color: var(--ink-3); white-space: nowrap; }
+.langsw a { font-size: inherit; }
+/* .top a перекриває колір .button вищою специфічністю (клас+тег проти
+   самого класу) — без цього кнопка входу в шапці стає нечитабельною:
+   ink-2 на cyan-заливці. */
+.top a.button { color: #0e1114; }
+.top a.button.secondary { color: var(--ink-2); }
+.inline { display: inline; }
+
+footer {
+  padding: 22px 24px; border-top: 1px solid var(--line);
+  color: var(--ink-3); font-size: 12px;
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+footer .build { opacity: .7; }
+
+.alarm {
+  background: var(--amber); color: #0e1114; padding: 10px 24px;
+  font-size: 13px; font-weight: 500;
+}
+.alarm code { font-family: var(--mono); background: rgba(0,0,0,.15); padding: 1px 5px; }
+
+/* ------------------------------------------------------------- типографіка */
+h1 { font: 300 30px/1.15 var(--sans); letter-spacing: -.025em; margin: 0 0 16px; }
+h2 { font: 500 17px/1.3 var(--sans); letter-spacing: -.01em; margin: 0 0 12px; }
+h3 { font: 500 13px/1.3 var(--sans); margin: 20px 0 7px; color: var(--ink-2); }
+p { margin: 0 0 12px; text-wrap: pretty; }
+ul { margin: 0 0 12px; padding-left: 20px; }
+li { margin-bottom: 6px; }
+a { color: var(--accent); }
+a:hover { color: var(--accent-hi); }
+
+.mono, pre, code { font-family: var(--mono); font-size: 13px; font-feature-settings: "tnum"; }
+.hint { color: var(--ink-3); font-size: 12.5px; }
+.warn-text { color: var(--amber); }
+.small { font-size: 12px; }
+.hot { color: var(--amber); font-weight: 500; }
+
+/* Мітка розділу: мала моноширинна капітель. Найчастіший елемент системи. */
+.hd, .tile-label, .clients-label {
+  font: 500 10px/1 var(--mono); letter-spacing: .16em;
+  text-transform: uppercase; color: var(--ink-3);
+}
+
+/* --------------------------------------------------------------- поверхні */
+.card {
+  background: var(--card); border: 1px solid var(--line);
+  padding: 22px 24px; margin-bottom: 18px;
+}
+.card.narrow { max-width: 620px; }
+.card.danger { border-color: var(--amber); }
+.card.token-once { border-color: var(--accent); }
+
+pre {
+  background: var(--bg); border: 1px solid var(--line);
+  padding: 12px 14px; overflow-x: auto; margin: 0 0 12px;
+}
+pre.token { font-size: 15px; word-break: break-all; white-space: pre-wrap; color: var(--accent); }
+
+.copy-row { display: flex; align-items: flex-start; gap: 8px; }
+.copy-row pre.copyable { flex: 1 1 auto; min-width: 0; margin-bottom: 0; }
+.copy-btn {
+  flex-shrink: 0; font-size: 11px; padding: 6px 10px; margin-top: 0;
+  background: var(--card); color: var(--ink-3); border: 1px solid var(--line); cursor: pointer;
+}
+.copy-btn:hover { color: var(--accent); border-color: var(--accent); }
+.copy-btn.done { color: var(--accent); border-color: var(--accent); }
+
+.fallback-note {
+  border-left: 2px solid var(--amber); padding-left: 12px; margin: 12px 0 0;
+}
+.fallback-note h3 { margin-top: 0; color: var(--amber); }
+
+/* CSS-only таби вибору клієнта (radio+label): без жодного JS. Пункти й
+   панелі — прямі діти .tabs, тому :checked дотягується до панелі через
+   сусідній селектор, а не через вкладеність. */
+.tabs { display: flex; flex-wrap: wrap; margin-top: 4px; }
+.tabs input {
+  position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none;
+}
+.tabs label {
+  font: 400 11.5px/1 var(--mono); padding: 10px 14px; border: 1px solid var(--line);
+  margin-left: -1px; margin-bottom: 0; cursor: pointer; color: var(--ink-3); background: var(--card);
+}
+.tabs input:checked + label {
+  color: var(--accent); border-color: var(--accent); background: var(--bg);
+  font-weight: 600; box-shadow: inset 0 -2px 0 var(--accent); position: relative; z-index: 1;
+}
+.tabs input:focus-visible + label { outline: 1px solid var(--accent); outline-offset: 2px; }
+.tabs-panel { display: none; flex-basis: 100%; padding-top: 14px; }
+#tab-psql:checked ~ #panel-psql,
+#tab-datagrip:checked ~ #panel-datagrip,
+#tab-dbeaver:checked ~ #panel-dbeaver,
+#tab-pgadmin:checked ~ #panel-pgadmin,
+#tab-other:checked ~ #panel-other { display: block; }
+.tabs-panel ol, .tabs-panel ul { margin-bottom: 0; }
+.tabs-panel li:last-child { margin-bottom: 0; }
+.tabs-panel p:last-child { margin-bottom: 0; }
+
+/* --------------------------------------------------------------- таблиці */
+table { border-collapse: collapse; width: 100%; }
+.kv th {
+  text-align: left; font-weight: 400; color: var(--ink-3); font-size: 12.5px;
+  padding: 8px 14px 8px 0; white-space: nowrap; vertical-align: top; width: 150px;
+}
+.kv td { padding: 8px 0; border-bottom: 1px solid var(--line-2); }
+.kv tr:last-child td { border-bottom: 0; }
+
+.log th {
+  text-align: left; font: 500 10px/1 var(--mono); letter-spacing: .14em;
+  text-transform: uppercase; color: var(--ink-3);
+  padding: 9px 14px 9px 0; border-bottom: 1px solid var(--line);
+}
+.log td { padding: 9px 14px 9px 0; border-bottom: 1px solid var(--line-2); }
+.log tr:last-child td { border-bottom: 0; }
+
+/* ---------------------------------------------------------------- кнопки */
+button, .button {
+  font: 500 12px/1 var(--mono); cursor: pointer;
+  background: var(--accent); color: #0e1114;
+  border: 1px solid var(--accent); border-radius: 0; padding: 12px 20px;
+  text-decoration: none; display: inline-block;
+}
+button:hover, .button:hover { background: var(--accent-hi); border-color: var(--accent-hi); color: var(--card); }
+button.danger { background: var(--amber); border-color: var(--amber); color: #0e1114; }
+/* Відмова не має виглядати «поганою» кнопкою: від того, як намальовано вибір,
+   залежить, чи є згода добровільною. Тому не сіра-непомітна, а рівноцінна за
+   вагою — інша лише за заливкою. */
+button.secondary, .button.secondary {
+  background: none; border-color: rgba(255,255,255,.2); color: var(--ink-2);
+}
+button.secondary:hover, .button.secondary:hover { border-color: var(--accent); color: var(--ink); }
+.choices { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+button.link {
+  background: none; border: 0; color: var(--accent); padding: 0;
+  font: inherit; font-size: 12.5px; text-decoration: underline;
+}
+button.link:hover { background: none; color: var(--accent-hi); }
+button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible {
+  outline: 1px solid var(--accent); outline-offset: 2px;
+}
+
+a.permalink {
+  float: right; margin-left: 8px; font-size: 11px; color: var(--ink-3);
+  text-decoration: none; opacity: .5;
+}
+a.permalink:hover { opacity: 1; }
+
+label { display: block; margin-bottom: 14px; color: var(--ink-3); font-size: 12.5px; }
+input, select {
+  display: block; width: 100%; margin-top: 5px; font: inherit; font-size: 14px;
+  padding: 9px 11px; border: 1px solid var(--line); border-radius: 0;
+  background: var(--bg); color: var(--ink);
+}
+input:focus, select:focus { border-color: var(--accent); }
+
+.meter { height: 6px; background: var(--bg); border: 1px solid var(--line); margin-bottom: 8px; }
+.meter-fill { height: 100%; background: var(--accent); }
+.meter-fill.warn { background: var(--amber); }
+
+/* ---------------------------------------------------------------- адмінка */
+/* Це інструмент, який переглядають і фільтрують, а не текст, який читають:
+   щільна таблиця, стан кодується формою і кольором, а не лише числом. */
+
+.head { display: flex; align-items: baseline; gap: 20px; flex-wrap: wrap; margin-bottom: 16px; }
+.head h1 { margin: 0; font-size: 24px; }
+
+.periods { display: flex; gap: 0; margin-left: auto; }
+.periods a {
+  font: 400 11.5px/1 var(--mono); padding: 8px 12px; border: 1px solid var(--line);
+  margin-left: -1px; text-decoration: none; color: var(--ink-3); background: var(--card);
+}
+.periods a.on { color: var(--accent); border-color: var(--accent); position: relative; z-index: 1; }
+
+main:has(.grid) { max-width: 1320px; }
+
+.scroll { overflow-x: auto; border: 1px solid var(--line); background: var(--card); }
+.grid { border-collapse: collapse; width: 100%; font-size: 13px; }
+.grid th {
+  position: sticky; top: 0; z-index: 1; text-align: left;
+  font: 500 10px/1 var(--mono); letter-spacing: .14em; text-transform: uppercase;
+  color: var(--ink-3); white-space: nowrap;
+  padding: 11px 14px; background: var(--card); border-bottom: 1px solid var(--line);
+}
+.grid td { padding: 9px 14px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.grid tr:last-child td { border-bottom: 0; }
+.grid tr:hover td { background: rgba(255,255,255,.025); }
+.grid .num, .num {
+  text-align: right; font-family: var(--mono); font-feature-settings: "tnum";
+  white-space: nowrap;
+}
+.grid a { text-decoration: none; }
+.grid a:hover { text-decoration: underline; }
+.grid tr.muted td { opacity: .5; }
+/* Помилка — amber, і лише волосяною лівою межею: заливка рядка перетворює
+   журнал із помилками на суцільну пляму, а помилок тут більшість. */
+.grid tr.err td:first-child { box-shadow: inset 2px 0 0 var(--amber); }
+/* Службовий запит клієнта: показується лише за галочкою, і навіть тоді має
+   читатися як тло, а не як робота студента. */
+.grid tr.service td { opacity: .45; font-style: italic; }
+.grid tr.fresh { animation: flash 1.2s ease-out; }
+@keyframes flash { from { background: rgba(90, 209, 200, .16); } }
+@media (prefers-reduced-motion: reduce) { .grid tr.fresh { animation: none; } }
+
+td.sql { max-width: 680px; }
+td.sql code { display: block; white-space: pre-wrap; word-break: break-word; line-height: 1.5; }
+td.sql .params { display: block; font-family: var(--mono); font-size: 11.5px; color: var(--ink-3); margin-top: 3px; }
+td.sql .errline { display: block; font-size: 12px; color: var(--amber); margin-top: 4px; }
+td.sql .errline b { font-family: var(--mono); }
+.errline { color: var(--amber); font-size: 12px; }
+
+.tag {
+  display: inline-block; font: 400 10.5px/1 var(--mono); padding: 3px 7px;
+  border: 1px solid var(--line); color: var(--ink-3);
+  vertical-align: 1px; margin-left: 5px;
+}
+.tag.warn, .tag.off { color: var(--amber); border-color: var(--amber); }
+.tag.ok-tag { color: var(--accent); border-color: var(--accent); }
+
+.sparkcell { width: 120px; }
+.spark { color: var(--accent); display: block; }
+
+.filters {
+  display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+  margin-bottom: 16px; padding: 14px 16px;
+  background: var(--card); border: 1px solid var(--line);
+}
+.filters label { margin: 0; }
+.filters select { font-size: 13px; padding: 7px 9px; width: auto; }
+.filters input[type=number] { font-size: 13px; padding: 7px 9px; width: 100px; }
+label.check { display: flex; align-items: flex-start; gap: 7px; padding-bottom: 9px; }
+label.check input { width: auto; flex-shrink: 0; margin-top: 3px; }
+label.check .check-text { flex: 1 1 auto; min-width: 0; }
+button:disabled, .button:disabled { opacity: .4; cursor: not-allowed; }
+.filters input[type=checkbox] { width: auto; margin: 0; }
+
+.live { margin-left: auto; display: flex; align-items: center; gap: 8px;
+  font: 400 11.5px/1 var(--mono); color: var(--ink-3); }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); }
+.dot.on { background: var(--accent); }
+.dot.off { background: var(--amber); }
+
+.gaps {
+  border-left: 2px solid var(--amber); background: rgba(232, 161, 60, .07);
+  padding: 12px 16px; margin-bottom: 18px; font-size: 13px;
+}
+
+.who-line { font-size: 12.5px; color: var(--ink-3); margin-bottom: 18px; }
+
+/* Плитки з числами: сітка у волосяних лініях, число моноширинне і велике. */
+.tiles { display: flex; flex-wrap: wrap; gap: 1px; background: var(--line);
+  border: 1px solid var(--line); margin-bottom: 24px; }
+.tile { background: var(--card); padding: 16px 20px 18px; min-width: 130px; flex: 1 1 auto; }
+.tile b { display: block; font: 500 26px/1 var(--mono); font-feature-settings: "tnum";
+  color: var(--ink); margin: 8px 0 4px; }
+.tile span { font-size: 11.5px; color: var(--ink-3); }
+.tile.wide { flex: 2 1 260px; }
+.tile-label { display: block; }
+
+.block { margin-bottom: 34px; }
+.block h2 { font-size: 15px; margin-bottom: 10px; }
+.block .periods { margin: 0 0 12px; }
+.foot-note { margin-top: 14px; max-width: 68ch; }
+
+/* --------------------------------------------------- екран «Активність» */
+.heat {
+  /* без width:auto успадковує глобальне table { width: 100% } — порожній
+     кутовий th і вузький стовпчик дня тягнуться на всю ширину картки, а
+     клітинки-години лишаються по 18px. Натуральна ширина під контент. */
+  border-collapse: collapse; font-size: 11px; width: auto;
+}
+.heat th { position: static; background: none; border: 0; padding: 2px 3px;
+  font: 400 10px/1 var(--mono); letter-spacing: 0; text-transform: none; color: var(--ink-3); }
+.heat th.mark { color: var(--ink-2); }
+.heat th:first-child { width: 1%; }
+.heat th.day { text-align: right; padding-right: 9px; white-space: nowrap; color: var(--ink-3); }
+.heat th.day .wd { color: var(--ink-3); margin-left: 5px; opacity: .7; }
+.heat td { padding: 1px; }
+
+.cell {
+  /* display навмисно не фіксований тут: клас спільний для <td class="cell">
+     у таблиці теплокарти (там потрібен звичайний table-cell) і для <i
+     class="cell"> у легенді (inline-block, див. .legend i.cell нижче).
+     display:block ламав табличну розкладку — усі клітинки збивались в один
+     стовпчик. */
+  width: 15px; height: 15px;
+  background: color-mix(in srgb, var(--accent) calc(var(--lvl, 0) * 100%), var(--card));
+  border: 1px solid var(--line-2);
+}
+.wirebg2 {
+  background-color: var(--card);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='96' height='96'><g fill='none' stroke='%23eaeef1' stroke-opacity='0.06'><path d='M0 0l96 96M96 0L0 96'/><path d='M48 0v96M0 48h96'/></g></svg>");
+  background-repeat: repeat;
+}
+
+.cell.empty { background: var(--card); }
+.cell.has-err { background: color-mix(in srgb, var(--amber) calc(var(--lvl, 0) * 100%), var(--card)); }
+
+.legend { display: flex; align-items: center; gap: 6px; margin-top: 12px;
+  font-size: 11.5px; color: var(--ink-3); flex-wrap: wrap; }
+.legend i.cell { display: inline-block; width: 13px; height: 13px; }
+.legend .sep { width: 18px; }
+
+.timeline { border: 1px solid var(--line); background: var(--card);
+  padding: 12px 16px; color: var(--ink-2); }
+.tl-row { display: flex; align-items: center; gap: 12px; }
+.tl-day { width: 48px; flex: none; font: 400 11px/1 var(--mono); color: var(--ink-3); text-align: right; }
+.tl-svg { flex: 1; height: 26px; display: block; }
+.tl-bar { fill: var(--accent); }
+.tl-err { stroke: var(--amber); }
+.tl-axis { display: flex; gap: 12px; margin-top: 3px; }
+.tl-hours { flex: 1; display: flex; justify-content: space-between;
+  font: 400 10px/1 var(--mono); color: var(--ink-3); }
+
+.chart { padding: 14px 16px; }
+.curve { width: 100%; min-width: 560px; height: auto; color: var(--ink-3); }
+.curve-bar { fill: var(--amber); }
+.curve .ax { font-size: 9.5px; fill: var(--ink-3); font-family: var(--mono); }
+
+.small-btn { font-size: 11px; padding: 8px 14px; }
+.rebuild { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap;
+  margin-top: 28px; padding-top: 18px; border-top: 1px solid var(--line); }
+
+.clients { display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  margin-top: 16px; font-size: 12px; }
+.client-chip { border: 1px solid var(--line); padding: 5px 11px;
+  background: var(--card); color: var(--ink-2); font-family: var(--mono); font-size: 11.5px; }
+.client-chip b { font-weight: 500; color: var(--ink); }
+.client-chip i { font-style: normal; color: var(--ink-3); margin-left: 6px; }
+
+.labform { max-width: 620px; }
+.labform textarea {
+  display: block; width: 100%; margin-top: 5px; font: 13px/1.5 var(--mono);
+  padding: 10px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+}
+
+/* ================================================================= landing */
+/* Сторінка для двох аудиторій одразу, і це головне обмеження її будови:
+   викладачу треба «нащо», студенту — «як», і жоден із них не має продиратися
+   крізь чужий текст. Тому дві рівні колонки-двері одразу під hero. */
+
+body:has(.hero) main { max-width: 1180px; padding: 0 0 0; }
+
+.hero {
+  padding: 88px 44px 64px; border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 26px; align-items: flex-start;
+}
+.hero h1 {
+  margin: 0; max-width: 900px; font: 300 clamp(30px, 4.4vw, 54px)/1.06 var(--sans);
+  letter-spacing: -.025em;
+}
+.hero h1 em { font-style: normal; color: var(--accent); }
+.hero h1 .amber { color: var(--amber); }
+.hero .lead {
+  margin: 0; max-width: 660px; font-size: 15.5px; line-height: 1.65; color: var(--ink-2);
+}
+
+/* Слайдер особливостей: дві картки продукту в одному ритмі show-and-tell,
+   а не дві окремі секції підряд. Прокрутка native (scroll-snap), точки лише
+   відображають/задають позицію — без бібліотек. */
+.feature-slider {
+  border-bottom: 1px solid var(--line);
+  padding: 50px 0 34px;
+  display: flex; flex-direction: column; gap: 22px;
+}
+.slider-track {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+.slider-track::-webkit-scrollbar { display: none; }
+.slide {
+  flex: 0 0 100%; scroll-snap-align: start;
+  padding: 0 40px; display: flex; flex-direction: column; gap: 26px;
+  box-sizing: border-box;
+}
+.slider-dots { display: flex; gap: 8px; justify-content: center; }
+.slider-dots .dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--line); border: 0; padding: 0; cursor: pointer;
+}
+.slider-dots .dot.on { background: var(--accent); }
+
+.insights {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+}
+.insight {
+  border: 1px solid var(--line); background: rgba(8, 9, 11, .72);
+  padding: 20px 22px; display: flex; flex-direction: column; gap: 11px;
+}
+.insight.hot { border-color: rgba(232, 161, 60, .4); }
+.insight .hd { color: var(--accent); }
+.insight.hot .hd { color: var(--amber); }
+.insight .num { font-size: 24px; }
+.insight p { margin: 0; font-size: 13px; line-height: 1.55; color: var(--ink-2); }
+@media (max-width: 860px) { .insights { grid-template-columns: 1fr; } }
+
+.doors {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1px;
+  background: var(--line); border-bottom: 1px solid var(--line);
+}
+.door { background: var(--card); padding: 40px 36px 44px; }
+.door h2 { font: 400 21px/1.25 var(--sans); letter-spacing: -.02em; margin: 14px 0 24px; }
+.hd.accent { color: var(--accent); display: flex; align-items: center; gap: 10px; }
+.hd.accent::before { content: ""; width: 8px; height: 8px; background: var(--accent); }
+
+.door dl { margin: 0; }
+.door dt { font-weight: 500; font-size: 14px; margin-bottom: 5px; }
+.door dd { margin: 0 0 20px; color: var(--ink-2); font-size: 13.5px; line-height: 1.6; }
+
+.steps { margin: 0 0 24px; padding: 0; list-style: none; counter-reset: s; }
+.steps li {
+  counter-increment: s; position: relative; padding-left: 38px; margin-bottom: 16px;
+  color: var(--ink-2); font-size: 13.5px; line-height: 1.6;
+}
+.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: 1px;
+  width: 24px; height: 24px; display: grid; place-items: center;
+  border: 1px solid var(--accent); color: var(--accent);
+  font: 500 11px/1 var(--mono);
+}
+.steps b { color: var(--ink); font-weight: 500; }
+
+.note { border-left: 2px solid var(--accent); padding: 2px 0 2px 16px; }
+.note p { margin: 6px 0 0; color: var(--ink-2); font-size: 13.5px; }
+
+.proof { padding: 44px; border-bottom: 1px solid var(--line); }
+.proof-grid { display: grid; grid-template-columns: 1.4fr 1fr; gap: 32px; margin-top: 18px; }
+.proof-code { border: 1px solid var(--line); overflow-x: auto; }
+.proof-code .grid th { font-size: 9.5px; }
+.proof-code .mono.ok { color: var(--ink-3); }
+.proof-code .mono.amber { color: var(--amber); }
+.proof-note p { color: var(--ink-2); font-size: 13.5px; }
+.proof-note b { color: var(--ink); font-weight: 500; }
+
+.honest-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1px; background: var(--line); border: 1px solid var(--line); margin-top: 18px;
+}
+.honest-grid > div {
+  background: var(--card); padding: 18px 20px; font-size: 13.5px;
+  color: var(--ink-2); line-height: 1.6;
+}
+.mark {
+  display: inline-block; margin-right: 9px; padding: 2px 7px;
+  font: 500 10px/1.4 var(--mono); letter-spacing: .1em; text-transform: uppercase;
+}
+.mark.yes { color: var(--accent); border: 1px solid var(--accent); }
+.mark.no { color: var(--ink-3); border: 1px solid var(--line); }
+
+.metrics { padding: 44px 44px 20px; border-bottom: 1px solid var(--line); }
+.metrics .tiles { margin-top: 18px; }
+
+.cta { padding: 64px 44px; display: flex; flex-direction: column; gap: 26px; align-items: flex-start; }
+.cta h2 { max-width: 760px; font: 300 26px/1.3 var(--sans); letter-spacing: -.02em; margin: 0; }
+
+@media (max-width: 860px) {
+  .doors, .proof-grid { grid-template-columns: 1fr; }
+  .hero, .proof, .metrics, .cta { padding-left: 24px; padding-right: 24px; }
+  .door { padding: 32px 24px; }
+}
+
+/* ---------------------------------------------------------------- анкета */
+/* Шкала має читатися як шкала: пʼять рівних позицій в один ряд. Випадні
+   списки тут заборонені — у них не видно, що крайні варіанти рівновіддалені,
+   і відповіді зсуваються до першого рядка списку. */
+fieldset.sus { border: 0; border-top: 1px solid var(--line-2); margin: 0; padding: 16px 0 6px; }
+fieldset.sus legend { padding: 0; font-size: 13.5px; color: var(--ink); }
+.scale { display: flex; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.scale .opt {
+  flex: 1; margin: 0; padding: 9px 4px 8px; background: var(--card);
+  text-align: center; cursor: pointer; color: var(--ink-3);
+}
+.scale .opt:hover { background: rgba(255,255,255,.03); }
+.scale .opt input { position: absolute; opacity: 0; width: 0; height: 0; }
+.scale .opt span { display: block; font: 500 13px/1 var(--mono); color: var(--ink-2); }
+.scale .opt i { display: block; font-style: normal; font-size: 10px; margin-top: 5px; }
+.scale .opt:has(input:checked) { background: var(--accent); }
+.scale .opt:has(input:checked) span,
+.scale .opt:has(input:checked) i { color: #0e1114; }
+.scale .opt:has(input:focus-visible) { outline: 1px solid var(--accent); outline-offset: -1px; }
+textarea {
+  display: block; width: 100%; margin-top: 5px; font: 14px/1.5 var(--sans);
+  padding: 10px 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink);
+}
+textarea:focus { border-color: var(--accent); }
+
+/* ------------------------------------------------------------ «Зараз» */
+/* Блок відповідає на єдине питання — на чому студент стоїть цієї хвилини.
+   Тому він виділений лівою рискою акценту й стоїть над таблицею лаб: у
+   таблиці ця відповідь є, але її треба вишукувати очима по стовпчику дат. */
+.block.here { border-left: 2px solid var(--accent); padding-left: 16px; }
+.here-card {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+  border: 1px solid var(--line); background: var(--card); padding: 14px 16px;
+}
+.here-lab a { font-size: 17px; color: var(--ink); text-decoration: none; }
+.here-lab a:hover { color: var(--accent); }
+.here-cov { display: block; margin-top: 4px; font: 400 12px/1 var(--mono); color: var(--ink-3); }
+.here-when { font: 500 14px/1.4 var(--mono); color: var(--ink-2); text-align: right; }
+.here-when .hint { display: block; margin-top: 4px; }
+.here-missing { margin: 12px 0 0; font-size: 13.5px; color: var(--ink-2); }
+.nowcell { max-width: 220px; }
+.nowcell a { text-decoration: none; }
+.nowcell .hint { display: block; margin-top: 3px; font: 400 11px/1.3 var(--mono); }
+
+/* ------------------------------------------------------------ треймап (З13/14) */
+/* Без бібліотек: плитка — flex-елемент, площа задається flex-grow
+   (front/app/admin.py:_sized), а не абсолютним позиціюванням. Колір — не
+   зелений→червоний (у системі рівно два акценти), а той самий прийом, що в
+   .cell вище: домішка кольору в .card через color-mix, тільки замість одного
+   акценту — перехід між двома залежно від --lvl (0 — низький ризик/cyan,
+   1 — високий/amber). */
+.treemap { display: flex; flex-wrap: wrap; gap: 2px; margin-bottom: 10px; }
+.tm-tile {
+  flex-grow: 1; flex-basis: 130px; min-width: 130px; min-height: 78px;
+  padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between;
+  border: 1px solid var(--line); text-decoration: none; color: var(--ink);
+  background: color-mix(in srgb,
+      color-mix(in srgb, var(--accent), var(--amber) calc(var(--lvl, 0) * 100%)) 38%,
+      var(--card));
+}
+.tm-tile:hover { border-color: var(--ink-2); }
+.tm-tile.vacant { background: var(--card); border-style: dashed; color: var(--ink-3); }
+.tm-title { font-size: 13px; font-weight: 500; }
+.tm-value { font: 500 19px/1 var(--mono); font-feature-settings: "tnum"; margin: 6px 0 4px; }
+.tm-value .hint { font: 400 11px/1 var(--sans); }
+.tm-sub { font-size: 11px; }

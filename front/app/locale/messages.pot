@@ -1,0 +1,1483 @@
+# Translations template for PROJECT.
+# Copyright (C) 2026 ORGANIZATION
+# This file is distributed under the same license as the PROJECT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PROJECT VERSION\n"
+"Report-Msgid-Bugs-To: EMAIL@ADDRESS\n"
+"POT-Creation-Date: 2026-09-14 15:23+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.18.0\n"
+
+#: front/app/main.py:126
+msgid "Доступ заборонено"
+msgstr ""
+
+#: front/app/main.py:126
+msgid "У вас немає прав для цієї дії чи сторінки."
+msgstr ""
+
+#: front/app/main.py:128
+msgid "Сторінку не знайдено"
+msgstr ""
+
+#: front/app/main.py:128
+msgid "Такої адреси немає, або вона застаріла."
+msgstr ""
+
+#: front/app/main.py:130
+msgid "Забагато спроб"
+msgstr ""
+
+#: front/app/main.py:130
+msgid "Зачекайте трохи і спробуйте ще раз."
+msgstr ""
+
+#: front/app/main.py:131 front/app/templates/error.html:2
+msgid "Помилка"
+msgstr ""
+
+#: front/app/main.py:131
+msgid "Щось пішло не так."
+msgstr ""
+
+#: front/app/main.py:141
+msgid "Сесія застаріла"
+msgstr ""
+
+#: front/app/main.py:142
+msgid "Оновіть сторінку і спробуйте ще раз."
+msgstr ""
+
+#: front/app/main.py:164
+msgid "Некоректний запит"
+msgstr ""
+
+#: front/app/main.py:165
+msgid "Перевірте введені дані та спробуйте ще раз."
+msgstr ""
+
+#: front/app/main.py:173
+msgid "Внутрішня помилка"
+msgstr ""
+
+#: front/app/main.py:174
+msgid "Ми вже знаємо про проблему. Спробуйте, будь ласка, пізніше."
+msgstr ""
+
+#: front/app/main.py:247
+#, python-format
+msgid "LMS повернув помилку: %(error)s"
+msgstr ""
+
+#: front/app/main.py:254
+msgid "Параметр state не збігається. Почніть вхід заново."
+msgstr ""
+
+#: front/app/main.py:257
+msgid "LMS не повернув код авторизації."
+msgstr ""
+
+#: front/app/templates/base.html:19
+msgid ""
+"Увімкнено <code>DEV_LOGIN_ENABLED</code> — вхід в обхід LMS. Особа "
+"користувача\n"
+"  <strong>не підтверджена LMS</strong>. Цей режим не можна лишати на "
+"сервері."
+msgstr ""
+
+#: front/app/templates/base.html:49
+msgid "версія"
+msgstr ""
+
+#: front/app/templates/base.html:49 front/app/templates/research.html:29
+msgid "від"
+msgstr ""
+
+#: front/app/templates/base.html:54
+msgid "скопійовано"
+msgstr ""
+
+#: front/app/templates/cabinet.html:2 front/app/templates/help.html:5
+#: front/app/templates/survey.html:5
+msgid "Моя база"
+msgstr ""
+
+#: front/app/templates/cabinet.html:6 front/app/templates/help.html:2
+msgid "Як підключитися"
+msgstr ""
+
+#: front/app/templates/cabinet.html:7 front/app/templates/survey.html:2
+msgid "Анкета"
+msgstr ""
+
+#: front/app/templates/cabinet.html:8
+msgid "Адміністрування"
+msgstr ""
+
+#: front/app/templates/cabinet.html:11
+msgid "Вийти"
+msgstr ""
+
+#: front/app/templates/cabinet.html:18
+msgid "Підключення"
+msgstr ""
+
+#: front/app/templates/cabinet.html:21
+msgid "Хост"
+msgstr ""
+
+#: front/app/templates/cabinet.html:22
+msgid "Порт"
+msgstr ""
+
+#: front/app/templates/cabinet.html:23
+msgid "або"
+msgstr ""
+
+#: front/app/templates/cabinet.html:23
+msgid "якщо перший ріжеться мережею"
+msgstr ""
+
+#: front/app/templates/cabinet.html:24
+msgid "База"
+msgstr ""
+
+#: front/app/templates/cabinet.html:25
+msgid "Користувач"
+msgstr ""
+
+#: front/app/templates/cabinet.html:27
+msgid "Пароль"
+msgstr ""
+
+#: front/app/templates/cabinet.html:30
+msgid ""
+"Новий пароль — показується <strong>один раз</strong>. У базі\n"
+"             зберігається лише його хеш: відновити неможливо, лише "
+"випустити новий."
+msgstr ""
+
+#: front/app/templates/cabinet.html:33 front/app/templates/cabinet.html:38
+msgid "дійсний до"
+msgstr ""
+
+#: front/app/templates/cabinet.html:34
+msgid ""
+"Він уже підставлений у рядок JDBC нижче — збережіть рядок собі, після\n"
+"             перезавантаження сторінки пароль тут більше не "
+"показуватиметься."
+msgstr ""
+
+#: front/app/templates/cabinet.html:37
+msgid "випущено"
+msgstr ""
+
+#: front/app/templates/cabinet.html:40
+msgid "ще не випускався — без нього підключитися не вийде"
+msgstr ""
+
+#: front/app/templates/cabinet.html:44
+msgid "Випустити новий пароль"
+msgstr ""
+
+#: front/app/templates/cabinet.html:44
+msgid "Випустити пароль"
+msgstr ""
+
+#: front/app/templates/cabinet.html:47
+msgid "Старий перестане працювати негайно."
+msgstr ""
+
+#: front/app/templates/cabinet.html:50
+msgid ""
+"Пароль щойно перевипускався. Наступний можна\n"
+"             випустити приблизно за"
+msgstr ""
+
+#: front/app/templates/cabinet.html:51
+msgid ""
+"с — інакше підключення, які ви вже\n"
+"             налаштували, ламатимуться одне за одним."
+msgstr ""
+
+#: front/app/templates/cabinet.html:56
+msgid "обовʼязковий,"
+msgstr ""
+
+#: front/app/templates/cabinet.html:59
+msgid "Рядок JDBC (DBeaver, DataGrip)"
+msgstr ""
+
+#: front/app/templates/cabinet.html:63 front/app/templates/cabinet.html:70
+#: front/app/templates/cabinet.html:96 front/app/templates/cabinet.html:103
+msgid "копіювати"
+msgstr ""
+
+#: front/app/templates/cabinet.html:65
+msgid ""
+"Пароль у рядку — щойно випущений, той самий, що вище. Збережіть рядок\n"
+"     собі: після перезавантаження сторінки пароль тут більше не "
+"показуватиметься."
+msgstr ""
+
+#: front/app/templates/cabinet.html:72
+msgid ""
+"Пароль у рядок не підставлено — випустіть пароль вище, тоді рядок\n"
+"     з паролем зʼявиться тут."
+msgstr ""
+
+#: front/app/templates/cabinet.html:76
+msgid "Як налаштувати клієнт"
+msgstr ""
+
+#: front/app/templates/cabinet.html:77
+msgid ""
+"Хост, порт, база, користувач і пароль — усе з таблиці вище.\n"
+"     Нижче — куди саме це вписати в кожному клієнті."
+msgstr ""
+
+#: front/app/templates/cabinet.html:90
+msgid "Інші клієнти"
+msgstr ""
+
+#: front/app/templates/cabinet.html:93
+msgid "Рядок для psql"
+msgstr ""
+
+#: front/app/templates/cabinet.html:100
+msgid "Якщо порт"
+msgstr ""
+
+#: front/app/templates/cabinet.html:100
+msgid "закритий"
+msgstr ""
+
+#: front/app/templates/cabinet.html:108
+msgid "Скопіюйте готовий рядок вище і виконайте його в терміналі."
+msgstr ""
+
+#: front/app/templates/cabinet.html:109
+msgid ""
+"Пароль у рядку не вказано навмисно — psql запитає його окремим\n"
+"            рядком"
+msgstr ""
+
+#: front/app/templates/cabinet.html:110
+msgid ""
+", вставте\n"
+"            туди пароль із таблиці вище."
+msgstr ""
+
+#: front/app/templates/cabinet.html:112
+msgid ""
+"Сертифікат сервера справжній (Let's Encrypt), тож жодного вікна з\n"
+"            підтвердженням недовіреного сертифіката при першому "
+"підключенні не буде —"
+msgstr ""
+
+#: front/app/templates/cabinet.html:114
+msgid "у рядку вже вмикає TLS."
+msgstr ""
+
+#: front/app/templates/cabinet.html:120
+msgid "Database → New → Data Source →"
+msgstr ""
+
+#: front/app/templates/cabinet.html:121 front/app/templates/cabinet.html:140
+msgid "Скопіюйте рядок JDBC вище і вставте його в поле"
+msgstr ""
+
+#: front/app/templates/cabinet.html:122 front/app/templates/cabinet.html:142
+msgid ""
+"(унизу вікна) — клієнт сам розбере хост, порт, базу, користувача й "
+"увімкне\n"
+"            SSL: усі параметри, включно з"
+msgstr ""
+
+#: front/app/templates/cabinet.html:124 front/app/templates/cabinet.html:144
+msgid "уже в рядку."
+msgstr ""
+
+#: front/app/templates/cabinet.html:125
+msgid "Пароль запитається у вікні"
+msgstr ""
+
+#: front/app/templates/cabinet.html:126
+msgid ""
+"при першій спробі підключитися — вставте той, що з таблиці вище, і за\n"
+"            бажання позначте, щоб його запамʼятали."
+msgstr ""
+
+#: front/app/templates/cabinet.html:130
+msgid "Дерево обʼєктів показує зайве"
+msgstr ""
+
+#: front/app/templates/cabinet.html:131 front/app/templates/cabinet.html:154
+#: front/app/templates/cabinet.html:156 front/app/templates/cabinet.html:159
+msgid "На вкладці"
+msgstr ""
+
+#: front/app/templates/cabinet.html:131
+msgid "увімкніть"
+msgstr ""
+
+#: front/app/templates/cabinet.html:132
+msgid ""
+"без цього навігатор намагається показати\n"
+"           всі бази кластера, хоча підключитися можна лише до своєї."
+msgstr ""
+
+#: front/app/templates/cabinet.html:139
+msgid "Database → New Database Connection →"
+msgstr ""
+
+#: front/app/templates/cabinet.html:141
+msgid "на вкладці"
+msgstr ""
+
+#: front/app/templates/cabinet.html:145
+msgid "Пароль вводиться просто на вкладці"
+msgstr ""
+
+#: front/app/templates/cabinet.html:145
+msgid ", у полі"
+msgstr ""
+
+#: front/app/templates/cabinet.html:146
+msgid "той, що з таблиці вище. Позначка"
+msgstr ""
+
+#: front/app/templates/cabinet.html:147
+msgid "зберігає його для наступних разів."
+msgstr ""
+
+#: front/app/templates/cabinet.html:153
+msgid "Правою кнопкою на"
+msgstr ""
+
+#: front/app/templates/cabinet.html:154
+msgid ""
+"впишіть будь-яку назву — вона лише\n"
+"            для вас, сервера не стосується."
+msgstr ""
+
+#: front/app/templates/cabinet.html:156
+msgid "впишіть"
+msgstr ""
+
+#: front/app/templates/cabinet.html:157
+msgid ""
+"це поле — база з\n"
+"            таблиці вище"
+msgstr ""
+
+#: front/app/templates/cabinet.html:158 front/app/templates/help.html:30
+#: front/app/templates/help.html:84 front/app/templates/help.html:86
+msgid "і"
+msgstr ""
+
+#: front/app/templates/cabinet.html:159
+msgid "виставте"
+msgstr ""
+
+#: front/app/templates/cabinet.html:161
+msgid "Пароль можна одразу вписати на вкладці"
+msgstr ""
+
+#: front/app/templates/cabinet.html:162
+msgid "(поле"
+msgstr ""
+
+#: front/app/templates/cabinet.html:162
+msgid ")"
+msgstr ""
+
+#: front/app/templates/cabinet.html:162
+msgid ""
+"або ввести пізніше, коли pgAdmin\n"
+"            запитає його при підключенні."
+msgstr ""
+
+#: front/app/templates/cabinet.html:168
+msgid ""
+"Підійде будь-який клієнт чи бібліотека, що вміє звичайний\n"
+"         wire-протокол PostgreSQL і TLS — параметри ті самі: хост, порт, "
+"база,\n"
+"         користувач, пароль і"
+msgstr ""
+
+#: front/app/templates/cabinet.html:171
+msgid "Приклад для Python —"
+msgstr ""
+
+#: front/app/templates/cabinet.html:173
+msgid "для Java —"
+msgstr ""
+
+#: front/app/templates/cabinet.html:175
+msgid "В обох, як і скрізь тут, головне не забути ввімкнути SSL."
+msgstr ""
+
+#: front/app/templates/cabinet.html:179
+msgid "DBeaver, DataGrip, помилки підключення і межі —"
+msgstr ""
+
+#: front/app/templates/cabinet.html:180
+msgid "коротка довідка"
+msgstr ""
+
+#: front/app/templates/cabinet.html:184 front/app/templates/help.html:84
+msgid "Місце"
+msgstr ""
+
+#: front/app/templates/cabinet.html:186
+#, python-format
+msgid "Використано %(pct)s відсотків квоти"
+msgstr ""
+
+#: front/app/templates/cabinet.html:189
+msgid "МБ з"
+msgstr ""
+
+#: front/app/templates/cabinet.html:189
+msgid "МБ"
+msgstr ""
+
+#: front/app/templates/cabinet.html:191
+msgid ""
+"Місце майже закінчилося. Видаліть зайві таблиці або\n"
+"       перестворіть базу, поки лабораторна не зламалася посеред роботи."
+msgstr ""
+
+#: front/app/templates/cabinet.html:198
+msgid "Де ви зараз"
+msgstr ""
+
+#: front/app/templates/cabinet.html:199
+msgid ""
+"Остання за часом лабораторна у вашому журналі. Це не оцінка й\n"
+"     не строк: у лабораторних немає меж, і повертатися до попередніх "
+"можна\n"
+"     будь-коли."
+msgstr ""
+
+#: front/app/templates/cabinet.html:203
+msgid "Робота"
+msgstr ""
+
+#: front/app/templates/cabinet.html:204
+msgid "Відтворено зразків"
+msgstr ""
+
+#: front/app/templates/cabinet.html:204
+msgid "з"
+msgstr ""
+
+#: front/app/templates/cabinet.html:206
+msgid "Ще не бачили"
+msgstr ""
+
+#: front/app/templates/cabinet.html:208
+msgid ""
+"зіставлення нечітке: якщо задачу ви зробили інакше,\n"
+"              ніж у зразку, вона може сюди потрапити помилково"
+msgstr ""
+
+#: front/app/templates/cabinet.html:211
+msgid "Остання спроба"
+msgstr ""
+
+#: front/app/templates/cabinet.html:217
+msgid "Як ішла ваша робота"
+msgstr ""
+
+#: front/app/templates/cabinet.html:219
+msgid ""
+"Те саме, що бачить викладач — без винятків. Числа описують\n"
+"       <b>процес</b>, а не якість і не оцінку."
+msgstr ""
+
+#: front/app/templates/cabinet.html:222
+msgid "Запитів у журналі"
+msgstr ""
+
+#: front/app/templates/cabinet.html:223
+msgid "різних за формою:"
+msgstr ""
+
+#: front/app/templates/cabinet.html:224
+msgid "Спрацювало одразу"
+msgstr ""
+
+#: front/app/templates/cabinet.html:225
+msgid "запитів, які вийшли з першої спроби"
+msgstr ""
+
+#: front/app/templates/cabinet.html:226
+msgid "Помилок"
+msgstr ""
+
+#: front/app/templates/cabinet.html:227
+msgid "з них синтаксичних"
+msgstr ""
+
+#: front/app/templates/cabinet.html:228
+msgid "це нормальна частина роботи, а не порушення"
+msgstr ""
+
+#: front/app/templates/cabinet.html:229
+msgid "Темп"
+msgstr ""
+
+#: front/app/templates/cabinet.html:229
+msgid "с"
+msgstr ""
+
+#: front/app/templates/cabinet.html:230
+msgid "медіанна пауза між запитами"
+msgstr ""
+
+#: front/app/templates/cabinet.html:231
+msgid "Застрягань"
+msgstr ""
+
+#: front/app/templates/cabinet.html:233
+msgid "вибралися самі з"
+msgstr ""
+
+#: front/app/templates/cabinet.html:236
+msgid ""
+"Застрягання — це пʼять і більше невдалих спроб того самого\n"
+"       запиту поспіль. Те, що ви з них вибралися, — найкращий доказ на "
+"захисті,\n"
+"       який взагалі можна мати."
+msgstr ""
+
+#: front/app/templates/cabinet.html:240
+msgid "Запитів ще немає — числа зʼявляться після першої роботи в базі."
+msgstr ""
+
+#: front/app/templates/cabinet.html:242
+msgid "Ще рахується. Перерахунок іде раз на дві хвилини."
+msgstr ""
+
+#: front/app/templates/cabinet.html:247 front/app/templates/research.html:2
+msgid "Участь у дослідженні"
+msgstr ""
+
+#: front/app/templates/cabinet.html:249
+msgid "Ви погодилися на використання знеособлених даних у науковій публікації"
+msgstr ""
+
+#: front/app/templates/cabinet.html:252
+msgid "Ви відмовилися від участі"
+msgstr ""
+
+#: front/app/templates/cabinet.html:253
+msgid "На курс, доступ до бази й оцінку це не впливає."
+msgstr ""
+
+#: front/app/templates/cabinet.html:255
+msgid "Питання ще не вирішене."
+msgstr ""
+
+#: front/app/templates/cabinet.html:257
+msgid "Змінити рішення"
+msgstr ""
+
+#: front/app/templates/cabinet.html:257
+msgid "Прочитати й вирішити"
+msgstr ""
+
+#: front/app/templates/cabinet.html:261
+msgid "Перестворити базу"
+msgstr ""
+
+#: front/app/templates/cabinet.html:262
+msgid ""
+"Поточна база буде <strong>видалена разом з усіма даними</strong> і "
+"створена\n"
+"     заново, порожня. Журнал ваших запитів при цьому зберігається."
+msgstr ""
+
+#: front/app/templates/cabinet.html:265
+#, python-format
+msgid "Видалити базу %(db)s з усіма даними?"
+msgstr ""
+
+#: front/app/templates/cabinet.html:267
+msgid "Видалити й створити заново"
+msgstr ""
+
+#: front/app/templates/cabinet.html:272
+msgid "Останні події"
+msgstr ""
+
+#: front/app/templates/cabinet.html:275
+msgid "Коли"
+msgstr ""
+
+#: front/app/templates/cabinet.html:275
+msgid "Подія"
+msgstr ""
+
+#: front/app/templates/cabinet.html:275
+msgid "Хто"
+msgstr ""
+
+#: front/app/templates/cabinet.html:287
+msgid "Поки порожньо."
+msgstr ""
+
+#: front/app/templates/consent.html:2
+msgid "Перед початком"
+msgstr ""
+
+#: front/app/templates/consent.html:6
+msgid "Як працює навчальний сервер PostgreSQL"
+msgstr ""
+
+#: front/app/templates/consent.html:8
+msgid ""
+"Для виконання завдань ви використовуєте базу даних, на якій ведеться\n"
+"     журнал дій."
+msgstr ""
+
+#: front/app/templates/consent.html:11 front/app/templates/help.html:73
+#: front/app/templates/landing.html:7
+msgid "Що записується"
+msgstr ""
+
+#: front/app/templates/consent.html:13
+msgid "усі надіслані SQL-запити — і успішні, і з помилками;"
+msgstr ""
+
+#: front/app/templates/consent.html:14
+msgid "текст запитів і час їх виконання."
+msgstr ""
+
+#: front/app/templates/consent.html:17
+msgid "Навіщо це викладачу"
+msgstr ""
+
+#: front/app/templates/consent.html:18
+msgid ""
+"Бачити перебіг вашої роботи та допомагати, якщо виникли труднощі, а не\n"
+"     лише оцінювати фінальний результат."
+msgstr ""
+
+#: front/app/templates/consent.html:21
+msgid "Зберігання"
+msgstr ""
+
+#: front/app/templates/consent.html:22
+msgid ""
+"Журнал зберігається на сервері не довше 18 місяців (для підсумків\n"
+"     курсу та апеляцій); автоматичне видалення застарілих даних — у "
+"планах."
+msgstr ""
+
+#: front/app/templates/consent.html:25
+msgid ""
+"Важливо — не пишіть у запитах власні паролі чи особисті\n"
+"     дані (наприклад, усередині"
+msgstr ""
+
+#: front/app/templates/consent.html:26
+msgid ""
+"База суто\n"
+"     навчальна."
+msgstr ""
+
+#: front/app/templates/consent.html:29
+msgid ""
+"Запис — доказ вашої роботи. Якщо ви не хочете, щоб ваші\n"
+"     запити записувалися, ви можете розгорнути PostgreSQL локально на "
+"своєму\n"
+"     компʼютері, проте тоді доведеться самостійно захищати кожну "
+"лабораторну\n"
+"     роботу."
+msgstr ""
+
+#: front/app/templates/consent.html:36
+msgid "Зрозуміло, далі"
+msgstr ""
+
+#: front/app/templates/dev_login.html:2 front/app/templates/dev_login.html:6
+msgid "Вхід в обхід LMS"
+msgstr ""
+
+#: front/app/templates/dev_login.html:7
+msgid ""
+"Режим розробки. Особа не перевіряється: ким назветесь, тим і\n"
+"     увійдете. Кожен такий вхід пишеться в журнал подій як\n"
+"     <span class=\"mono\">dev_login</span>."
+msgstr ""
+
+#: front/app/templates/dev_login.html:12
+msgid "Ідентифікатор (sub)"
+msgstr ""
+
+#: front/app/templates/dev_login.html:15
+msgid "Пошта"
+msgstr ""
+
+#: front/app/templates/dev_login.html:18
+msgid "Імʼя"
+msgstr ""
+
+#: front/app/templates/dev_login.html:21
+msgid "Увійти"
+msgstr ""
+
+#: front/app/templates/error.html:6
+msgid "Не вдалося увійти"
+msgstr ""
+
+#: front/app/templates/error.html:8
+msgid "Спробувати ще раз"
+msgstr ""
+
+#: front/app/templates/help.html:10
+msgid "Як підключитися до своєї бази"
+msgstr ""
+
+#: front/app/templates/help.html:11
+msgid ""
+"У вас є персональна база даних на сервері кафедри. Підключатися до неї\n"
+"     можна будь-яким звичним клієнтом — psql, DBeaver, DataGrip, pgAdmin,"
+"\n"
+"     бібліотекою з Python чи Java."
+msgstr ""
+
+#: front/app/templates/help.html:17
+msgid "Три різні паролі, які легко переплутати"
+msgstr ""
+
+#: front/app/templates/help.html:19
+msgid "Пароль LMS"
+msgstr ""
+
+#: front/app/templates/help.html:19
+msgid "яким ви входите в LMS і в цей кабінет. До бази стосунку не має."
+msgstr ""
+
+#: front/app/templates/help.html:20
+msgid "Пароль до бази"
+msgstr ""
+
+#: front/app/templates/help.html:20
+msgid ""
+"випускається кнопкою в кабінеті, показується <strong>один раз</strong>. "
+"Саме його вставляють у DBeaver."
+msgstr ""
+
+#: front/app/templates/help.html:21
+msgid "Пароль ролі PostgreSQL"
+msgstr ""
+
+#: front/app/templates/help.html:21
+msgid "існує, але вам невідомий і не потрібен — його підставляє сервер."
+msgstr ""
+
+#: front/app/templates/help.html:23
+msgid ""
+"Пароль до бази зберігається лише як хеш: підказати забутий\n"
+"     неможливо, можна тільки випустити новий. Новий негайно вимикає "
+"старий —\n"
+"     тобто ламає всі підключення, які ви вже налаштували. Тому не тисніть"
+"\n"
+"     кнопку «про всяк випадок»."
+msgstr ""
+
+#: front/app/templates/help.html:32
+msgid "Створіть підключення типу"
+msgstr ""
+
+#: front/app/templates/help.html:33
+msgid "Хост, порт, база й користувач — з таблиці в"
+msgstr ""
+
+#: front/app/templates/help.html:33
+msgid "кабінеті"
+msgstr ""
+
+#: front/app/templates/help.html:34
+msgid "Скопіюйте їх звідти, а не набирайте з памʼяті."
+msgstr ""
+
+#: front/app/templates/help.html:35
+msgid "Пароль — той, що показався один раз після натискання кнопки."
+msgstr ""
+
+#: front/app/templates/help.html:36
+msgid ""
+"<strong>Увімкніть SSL.</strong> У DBeaver це вкладка <em>SSL</em> →\n"
+"        <em>Use SSL</em>; у DataGrip — <em>SSH/SSL</em> → <em>Use "
+"SSL</em>.\n"
+"        Без цього зʼєднання буде відхилено ще до перевірки пароля."
+msgstr ""
+
+#: front/app/templates/help.html:39
+msgid "Якщо порт не проходить крізь мережу"
+msgstr ""
+
+#: front/app/templates/help.html:39
+msgid "гуртожитку чи корпусу"
+msgstr ""
+
+#: front/app/templates/help.html:40
+msgid "спробуйте запасний, він указаний у кабінеті поруч з основним."
+msgstr ""
+
+#: front/app/templates/help.html:42
+msgid ""
+"У дереві обʼєктів ви побачите тільки свою базу. Це навмисно:\n"
+"     перелік чужих баз і облікових записів закрито. Робота з власною "
+"базою від\n"
+"     цього не змінюється."
+msgstr ""
+
+#: front/app/templates/help.html:45
+msgid "Сертифікат сервера справжній (Let's Encrypt), тож замість"
+msgstr ""
+
+#: front/app/templates/help.html:46
+msgid "можна ввімкнути й перевірку імені хоста"
+msgstr ""
+
+#: front/app/templates/help.html:47
+msgid "у psql додайте"
+msgstr ""
+
+#: front/app/templates/help.html:48
+msgid "у DBeaver/DataGrip — властивість драйвера"
+msgstr ""
+
+#: front/app/templates/help.html:50
+msgid "Не обовʼязково — з"
+msgstr ""
+
+#: front/app/templates/help.html:50
+msgid "канал так само шифрований."
+msgstr ""
+
+#: front/app/templates/help.html:54
+msgid "Як приховати чужі бази в клієнті"
+msgstr ""
+
+#: front/app/templates/help.html:55
+msgid ""
+"Технічно ви бачите лише свою базу — але клієнт може додатково показувати\n"
+"     чи кешувати системні бази ("
+msgstr ""
+
+#: front/app/templates/help.html:57
+msgid ""
+"\n"
+"     або старі підключення, якщо ви колись підʼєднувалися з іншим "
+"обліковим\n"
+"     записом. Це не витік доступу, просто зайвий шум у дереві."
+msgstr ""
+
+#: front/app/templates/help.html:61
+msgid ""
+"<strong>DBeaver.</strong> Edit Connection → вкладка <em>PostgreSQL</em>\n"
+"        → вимкніть перемикач <em>Show all databases</em>. Дерево "
+"звузиться до\n"
+"        бази з вашого підключення."
+msgstr ""
+
+#: front/app/templates/help.html:64
+msgid ""
+"<strong>DataGrip.</strong> У налаштуваннях підключення (Data Source\n"
+"        Properties) є аналогічний перемикач показу системних баз/схем — у"
+"\n"
+"        панелі <em>Schemas</em> зменшіть область видимості до своєї бази."
+msgstr ""
+
+#: front/app/templates/help.html:68
+msgid ""
+"Точні назви пунктів можуть відрізнятися між версіями клієнта\n"
+"     — шукайте перемикач показу системних баз у налаштуваннях зʼєднання."
+msgstr ""
+
+#: front/app/templates/help.html:74
+msgid ""
+"Кожен SQL-запит, який ви виконуєте у своїй базі: і успішний, і той, що\n"
+"     завершився помилкою, разом із текстом запиту й часом виконання. "
+"Помилкові\n"
+"     запити — найцінніші: саме з них видно, де саме виникла складність."
+msgstr ""
+
+#: front/app/templates/help.html:77
+msgid ""
+"Тому не тримайте в навчальній базі персональні чи будь-які\n"
+"     інші чутливі дані — вона для лабораторних."
+msgstr ""
+
+#: front/app/templates/help.html:82
+msgid "Обмеження, які варто знати заздалегідь"
+msgstr ""
+
+#: front/app/templates/help.html:84
+msgid ""
+"на базу виділено фіксовану квоту; поточний стан видно в кабінеті. Коли "
+"воно закінчується, перестають працювати лише оператори, що"
+msgstr ""
+
+#: front/app/templates/help.html:84
+msgid "додають"
+msgstr ""
+
+#: front/app/templates/help.html:84
+msgid "дані."
+msgstr ""
+
+#: front/app/templates/help.html:84
+msgid ""
+"працюють як завжди — інакше вибратися з переповненої бази було б "
+"неможливо."
+msgstr ""
+
+#: front/app/templates/help.html:85
+msgid "Час запиту"
+msgstr ""
+
+#: front/app/templates/help.html:85
+msgid ""
+"запит, що виконується надто довго, буде перерваний. Для лабораторних "
+"цього з запасом достатньо; якщо впираєтеся — майже завжди справа в "
+"запиті, а не в межі."
+msgstr ""
+
+#: front/app/templates/help.html:86
+msgid "Параметри памʼяті"
+msgstr ""
+
+#: front/app/templates/help.html:86
+msgid ""
+"не приймаються. Памʼять сервера спільна на всю групу, і один запит не має"
+" класти роботу решті."
+msgstr ""
+
+#: front/app/templates/help.html:91
+msgid "Повідомлення про помилку і що воно означає"
+msgstr ""
+
+#: front/app/templates/help.html:93
+msgid "зʼєднання без TLS відхилено"
+msgstr ""
+
+#: front/app/templates/help.html:93
+msgid "не ввімкнено SSL у клієнті — див. пункт 4 вище."
+msgstr ""
+
+#: front/app/templates/help.html:94
+msgid "пароль ще не випущено"
+msgstr ""
+
+#: front/app/templates/help.html:94
+msgid "відкрийте кабінет і натисніть «Випустити пароль»."
+msgstr ""
+
+#: front/app/templates/help.html:95
+msgid "термін дії пароля вичерпано"
+msgstr ""
+
+#: front/app/templates/help.html:95
+msgid "випустіть новий у кабінеті."
+msgstr ""
+
+#: front/app/templates/help.html:96
+msgid "зайдіть у кабінет і прочитайте, який журнал ведеться"
+msgstr ""
+
+#: front/app/templates/help.html:96
+msgid "ви ще не підтвердили згоду на першому екрані."
+msgstr ""
+
+#: front/app/templates/help.html:97
+msgid "ця база вам не належить"
+msgstr ""
+
+#: front/app/templates/help.html:97
+msgid "у полі «база» вказано чуже імʼя. Скопіюйте своє з кабінету."
+msgstr ""
+
+#: front/app/templates/help.html:98
+msgid "забагато невдалих спроб входу"
+msgstr ""
+
+#: front/app/templates/help.html:98
+msgid ""
+"кілька разів поспіль пішов невірний пароль. Зачекайте хвилину; найчастіше"
+" винен клієнт, який мовчки перепідключається зі старим паролем після "
+"ротації."
+msgstr ""
+
+#: front/app/templates/help.html:99
+msgid "сервер перевантажений"
+msgstr ""
+
+#: front/app/templates/help.html:99
+msgid ""
+"усі підключення зайняті — зазвичай на початку заняття. Спробуйте за "
+"хвилину."
+msgstr ""
+
+#: front/app/templates/help.html:100
+msgid "Місце вичерпано"
+msgstr ""
+
+#: front/app/templates/help.html:100
+msgid "квота; видаліть зайве або перестворіть базу в кабінеті."
+msgstr ""
+
+#: front/app/templates/help.html:101
+msgid "Wireward не дозволяє змінювати параметр"
+msgstr ""
+
+#: front/app/templates/help.html:101
+msgid "див. «Параметри памʼяті» вище."
+msgstr ""
+
+#: front/app/templates/help.html:106
+msgid "Якщо все зламалося"
+msgstr ""
+
+#: front/app/templates/help.html:107
+msgid ""
+"У кабінеті є кнопка «Перестворити базу»: вона видаляє базу з усіма даними"
+"\n"
+"     і створює порожню."
+msgstr ""
+
+#: front/app/templates/help.html:108
+msgid "Журнал ваших запитів при цьому зберігається"
+msgstr ""
+
+#: front/app/templates/help.html:109
+msgid "тобто виконана робота не пропадає, навіть якщо самі дані ви втратили."
+msgstr ""
+
+#: front/app/templates/help.html:110
+msgid ""
+"Якщо не допомогло — напишіть викладачеві, вказавши точний текст помилки.\n"
+"     Він видно й з боку сервера, але з вашим текстом розбір коротший."
+msgstr ""
+
+#: front/app/templates/http_error.html:8
+msgid "На головну"
+msgstr ""
+
+#: front/app/templates/landing.html:2
+msgid "Wireward — журнал SQL для лабораторних"
+msgstr ""
+
+#: front/app/templates/landing.html:5
+msgid "Викладачу"
+msgstr ""
+
+#: front/app/templates/landing.html:6
+msgid "Студенту"
+msgstr ""
+
+#: front/app/templates/landing.html:8 front/app/templates/landing.html:165
+msgid "Вхід через LMS"
+msgstr ""
+
+#: front/app/templates/landing.html:14
+msgid "розумні лабораторні з баз даних"
+msgstr ""
+
+#: front/app/templates/landing.html:15
+msgid "Готова відповідь нічого не каже."
+msgstr ""
+
+#: front/app/templates/landing.html:16
+msgid "Wireward показує,"
+msgstr ""
+
+#: front/app/templates/landing.html:16
+msgid "як студент до неї йшов"
+msgstr ""
+
+#: front/app/templates/landing.html:18
+msgid "Я викладач — що це дає"
+msgstr ""
+
+#: front/app/templates/landing.html:19
+msgid "Я студент — як підключитися"
+msgstr ""
+
+#: front/app/templates/landing.html:27
+msgid "чого не бачить серверний лог"
+msgstr ""
+
+#: front/app/templates/landing.html:31
+msgid "запит"
+msgstr ""
+
+#: front/app/templates/landing.html:45
+msgid ""
+"<b>Рядок 3</b> — опечатка в ключовому слові. Такий запит падає на\n"
+"             розборі й до виконавця не доходить: для pgAudit і серверного"
+" логу він\n"
+"             не існує взагалі."
+msgstr ""
+
+#: front/app/templates/landing.html:48
+msgid ""
+"А для курсу баз даних це найцінніший матеріал — видно точний момент,\n"
+"             коли студент шукав помилку, і скільки часу на це пішло."
+msgstr ""
+
+#: front/app/templates/landing.html:50
+msgid ""
+"Wireward стоїть у розриві між клієнтом студента і\n"
+"             кластером і бачить обидві сторони розмови."
+msgstr ""
+
+#: front/app/templates/landing.html:57
+msgid "що видно викладачеві перед заняттям"
+msgstr ""
+
+#: front/app/templates/landing.html:60
+msgid "застрягання"
+msgstr ""
+
+#: front/app/templates/landing.html:61
+msgid "11 спроб"
+msgstr ""
+
+#: front/app/templates/landing.html:62
+msgid "Студент годину не може зʼєднати дві таблиці — варто підійти першим."
+msgstr ""
+
+#: front/app/templates/landing.html:65
+msgid "група"
+msgstr ""
+
+#: front/app/templates/landing.html:67
+msgid "Кожна шоста спроба групи падає, і майже все — одна й та сама помилка."
+msgstr ""
+
+#: front/app/templates/landing.html:70
+msgid "лабораторна 4"
+msgstr ""
+
+#: front/app/templates/landing.html:72
+msgid "Половина групи ще не торкалася EXISTS — тему можна не вважати пройденою."
+msgstr ""
+
+#: front/app/templates/landing.html:78
+msgid "чесно: що записується"
+msgstr ""
+
+#: front/app/templates/landing.html:80 front/app/templates/landing.html:82
+#: front/app/templates/landing.html:84
+msgid "так"
+msgstr ""
+
+#: front/app/templates/landing.html:80
+msgid ""
+"Кожен SQL-запит у вашій навчальній\n"
+"          базі — текст, час, тривалість, помилка."
+msgstr ""
+
+#: front/app/templates/landing.html:82
+msgid ""
+"Значення, які ви пишете в запиті\n"
+"          (наприклад дані в"
+msgstr ""
+
+#: front/app/templates/landing.html:84
+msgid "Коли й скільки ви працювали."
+msgstr ""
+
+#: front/app/templates/landing.html:85 front/app/templates/landing.html:87
+#: front/app/templates/landing.html:90
+msgid "ні"
+msgstr ""
+
+#: front/app/templates/landing.html:85
+msgid ""
+"Нічого поза цією базою: ні файлів, ні\n"
+"          екрана, ні іншої активності на компʼютері."
+msgstr ""
+
+#: front/app/templates/landing.html:87
+msgid ""
+"Жодних блокувань за помилки. Не\n"
+"          пропускаються лише команди, що ламають роботу всім (наприклад "
+"зняття\n"
+"          обмежень памʼяті)."
+msgstr ""
+
+#: front/app/templates/landing.html:90
+msgid ""
+"Ніяких автоматичних висновків про\n"
+"          списування. Програма їх не робить — вона показує процес."
+msgstr ""
+
+#: front/app/templates/landing.html:93
+msgid ""
+"При першому вході ви це побачите й підтвердите.\n"
+"         Окремо й добровільно — згода на використання знеособлених даних "
+"у науковій\n"
+"         публікації; відмова ні на що не впливає, і рішення можна змінити"
+" будь-коли."
+msgstr ""
+
+#: front/app/templates/landing.html:100
+msgid "Слайд 1 з 3"
+msgstr ""
+
+#: front/app/templates/landing.html:101
+msgid "Слайд 2 з 3"
+msgstr ""
+
+#: front/app/templates/landing.html:102
+msgid "Слайд 3 з 3"
+msgstr ""
+
+#: front/app/templates/landing.html:123
+msgid "викладачу"
+msgstr ""
+
+#: front/app/templates/landing.html:124
+msgid "Перевірка за пʼять хвилин замість опитування кожного"
+msgstr ""
+
+#: front/app/templates/landing.html:126
+msgid "Видно роботу, а не тільки результат"
+msgstr ""
+
+#: front/app/templates/landing.html:127
+msgid ""
+"Кожен запит, включно з тими, що впали на синтаксисі. Саме їх не\n"
+"          бачить ані серверний лог, ані pgAudit: запит, який не "
+"розібрався, до\n"
+"          виконавця не доходить."
+msgstr ""
+
+#: front/app/templates/landing.html:131
+msgid "Лабораторна — це зміст, а не проміжок часу"
+msgstr ""
+
+#: front/app/templates/landing.html:132
+msgid ""
+"Ви задаєте кілька зразкових запитів. Wireward сам знаходить у журналі\n"
+"          роботу над цією лабою — нечітко, за формою запиту, бо "
+"студентські\n"
+"          розвʼязки не збігаються зі зразком слово в слово."
+msgstr ""
+
+#: front/app/templates/landing.html:136
+msgid "Питання до захисту, а не вирок"
+msgstr ""
+
+#: front/app/templates/landing.html:137
+msgid ""
+"Показники процесу кажуть, про що спитати: тут студент бився в одну\n"
+"          помилку годину, а тут складна відповідь зʼявилася одразу, без "
+"жодної\n"
+"          спроби до неї. Що це означає — вирішує захист, не програма."
+msgstr ""
+
+#: front/app/templates/landing.html:144
+msgid "студенту"
+msgstr ""
+
+#: front/app/templates/landing.html:145
+msgid "Своя база за один вхід. Встановлювати нічого"
+msgstr ""
+
+#: front/app/templates/landing.html:147
+msgid ""
+"<b>Увійти через LMS.</b> Персональна база PostgreSQL створюється\n"
+"          одразу, ви в ній власник."
+msgstr ""
+
+#: front/app/templates/landing.html:149
+msgid "<b>Випустити пароль.</b> Одна кнопка в кабінеті; показується один раз."
+msgstr ""
+
+#: front/app/templates/landing.html:150
+msgid ""
+"<b>Підключитися звичним клієнтом.</b> DBeaver, DataGrip, psql,\n"
+"          psycopg — рядок підключення вже готовий у кабінеті."
+msgstr ""
+
+#: front/app/templates/landing.html:154
+msgid "і головне"
+msgstr ""
+
+#: front/app/templates/landing.html:155
+msgid ""
+"Помилки не караються. Їх видно — але видно й те, що ви самі до всього\n"
+"         дійшли. На захисті це ваш аргумент, а не аргумент проти вас."
+msgstr ""
+
+#: front/app/templates/landing.html:162
+msgid ""
+"Підключіть одну групу на одну лабораторну — і подивіться, чи змінилося\n"
+"      те, що ви про неї думали."
+msgstr ""
+
+#: front/app/templates/landing.html:167
+msgid "Вхід в обхід LMS (розробка)"
+msgstr ""
+
+#: front/app/templates/research.html:6
+msgid "Участь у відкритому науковому дослідженні"
+msgstr ""
+
+#: front/app/templates/research.html:7
+msgid "Публікація навчального датасету"
+msgstr ""
+
+#: front/app/templates/research.html:9
+msgid ""
+"Ми проводимо дослідження того, як студенти освоюють SQL (типові помилки,\n"
+"     послідовність виправлень), і плануємо опублікувати відкритий "
+"науковий\n"
+"     датасет. Він допоможе іншим викладачам і дослідникам створювати "
+"кращі\n"
+"     навчальні інструменти."
+msgstr ""
+
+#: front/app/templates/research.html:14
+msgid "Що публікується"
+msgstr ""
+
+#: front/app/templates/research.html:15
+msgid ""
+"Лише ланцюжок запитів і помилок під випадковим знеособленим кодом.\n"
+"     Жодних імен, пошт, груп чи оцінок."
+msgstr ""
+
+#: front/app/templates/research.html:18
+msgid "Зберігання датасету"
+msgstr ""
+
+#: front/app/templates/research.html:19
+msgid ""
+"Знеособлені матеріали в репозиторії публікуються безстроково (для\n"
+"     повторюваності досліджень іншими вченими)."
+msgstr ""
+
+#: front/app/templates/research.html:22
+msgid "Повна добровільність"
+msgstr ""
+
+#: front/app/templates/research.html:23
+msgid ""
+"Ваша відповідь ніяк не впливає на оцінки, доступ до бази чи\n"
+"     перевірку робіт."
+msgstr ""
+
+#: front/app/templates/research.html:27
+msgid "Ваше поточне рішення:"
+msgstr ""
+
+#: front/app/templates/research.html:28
+msgid "участь"
+msgstr ""
+
+#: front/app/templates/research.html:28
+msgid "відмова"
+msgstr ""
+
+#: front/app/templates/research.html:36
+msgid ""
+"Чи дозволяєте ви включити вашу знеособлену послідовність запитів до\n"
+"       відкритого датасету?"
+msgstr ""
+
+#: front/app/templates/research.html:41
+msgid ""
+"Так, дозволяю (запити увійдуть у відкритий науковий датасет під\n"
+"      випадковим ID)"
+msgstr ""
+
+#: front/app/templates/research.html:47
+msgid ""
+"Ні, не дозволяю (запити залишаться тільки на сервері викладача для\n"
+"      навчання)"
+msgstr ""
+
+#: front/app/templates/research.html:51
+msgid "Підтвердити та почати роботу"
+msgstr ""
+
+#: front/app/templates/research.html:54
+msgid ""
+"Рішення можна змінити в кабінеті в будь-який момент до\n"
+"     публікації даних."
+msgstr ""
+
+#: front/app/templates/research.html:56
+msgid "Вирішу пізніше"
+msgstr ""
+
+#: front/app/templates/research.html:57
+msgid "питання зʼявиться знову при наступному вході."
+msgstr ""
+
+#: front/app/templates/survey.html:10
+msgid "Дві короткі анкети"
+msgstr ""
+
+#: front/app/templates/survey.html:11
+msgid ""
+"Перша — про <b>засіб</b>: чи зручно ним користуватися. Друга — про\n"
+"     <b>вашу роботу</b>. Разом хвилин пʼять."
+msgstr ""
+
+#: front/app/templates/survey.html:13
+msgid ""
+"Відповіді не впливають на оцінку й не показуються поіменно.\n"
+"     Заповнити можна незалежно від того, чи погодилися ви на участь у\n"
+"     дослідженні: відмова від участі не забирає право сказати, що засіб\n"
+"     незручний."
+msgstr ""
+
+#: front/app/templates/survey.html:17
+msgid "Збережено. Дякую."
+msgstr ""
+
+#: front/app/templates/survey.html:21
+msgid "Про засіб"
+msgstr ""
+
+#: front/app/templates/survey.html:23
+msgid "Ви вже заповнювали"
+msgstr ""
+
+#: front/app/templates/survey.html:24
+msgid "Можна відповісти заново — попередні відповіді буде замінено."
+msgstr ""
+
+#: front/app/templates/survey.html:43 front/app/templates/survey.html:59
+msgid "Надіслати"
+msgstr ""
+
+#: front/app/templates/survey.html:48
+msgid "Про вашу роботу"
+msgstr ""
+
+#: front/app/templates/survey.html:50
+msgid "Ви вже відповідали"
+msgstr ""
+

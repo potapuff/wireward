@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Перед початком{% endtrans %} — Wireward{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>{% trans %}Як працює навчальний сервер PostgreSQL{% endtrans %}</h1>
+
+  <p>{% trans %}Для виконання завдань ви використовуєте базу даних, на якій ведеться
+     журнал дій.{% endtrans %}</p>
+
+  <h2>{% trans %}Що записується{% endtrans %}</h2>
+  <ul>
+    <li>{% trans %}усі надіслані SQL-запити — і успішні, і з помилками;{% endtrans %}</li>
+    <li>{% trans %}текст запитів і час їх виконання.{% endtrans %}</li>
+  </ul>
+
+  <h2>{% trans %}Навіщо це викладачу{% endtrans %}</h2>
+  <p>{% trans %}Бачити перебіг вашої роботи та допомагати, якщо виникли труднощі, а не
+     лише оцінювати фінальний результат.{% endtrans %}</p>
+
+  <h2>{% trans %}Зберігання{% endtrans %}</h2>
+  <p>{% trans %}Журнал зберігається на сервері не довше 18 місяців (для підсумків
+     курсу та апеляцій); автоматичне видалення застарілих даних — у планах.{% endtrans %}</p>
+
+  <p class="hint">{% trans %}Важливо — не пишіть у запитах власні паролі чи особисті
+     дані (наприклад, усередині{% endtrans %} <span class="mono">INSERT</span>). {% trans %}База суто
+     навчальна.{% endtrans %}</p>
+
+  <p class="hint">{% trans %}Запис — доказ вашої роботи. Якщо ви не хочете, щоб ваші
+     запити записувалися, ви можете розгорнути PostgreSQL локально на своєму
+     компʼютері, проте тоді доведеться самостійно захищати кожну лабораторну
+     роботу.{% endtrans %}</p>
+
+  <form method="post" action="/consent">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <button>{% trans %}Зрозуміло, далі{% endtrans %}</button>
+  </form>
+</section>
+{% endblock %}

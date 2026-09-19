@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Участь у дослідженні{% endtrans %} — Wireward{% endblock %}
+
+{% block content %}
+<section class="card narrow">
+  <h1>{% trans %}Участь у відкритому науковому дослідженні{% endtrans %}</h1>
+  <h2>{% trans %}Публікація навчального датасету{% endtrans %}</h2>
+
+  <p>{% trans %}Ми проводимо дослідження того, як студенти освоюють SQL (типові помилки,
+     послідовність виправлень), і плануємо опублікувати відкритий науковий
+     датасет. Він допоможе іншим викладачам і дослідникам створювати кращі
+     навчальні інструменти.{% endtrans %}</p>
+
+  <h2>{% trans %}Що публікується{% endtrans %}</h2>
+  <p>{% trans %}Лише ланцюжок запитів і помилок під випадковим знеособленим кодом.
+     Жодних імен, пошт, груп чи оцінок.{% endtrans %}</p>
+
+  <h2>{% trans %}Зберігання датасету{% endtrans %}</h2>
+  <p>{% trans %}Знеособлені матеріали в репозиторії публікуються безстроково (для
+     повторюваності досліджень іншими вченими).{% endtrans %}</p>
+
+  <h2>{% trans %}Повна добровільність{% endtrans %}</h2>
+  <p class="hint">{% trans %}Ваша відповідь ніяк не впливає на оцінки, доступ до бази чи
+     перевірку робіт.{% endtrans %}</p>
+
+  {% if student.research_consent != 'pending' %}
+    <p>{% trans %}Ваше поточне рішення:{% endtrans %}
+       <strong>{{ _('участь') if student.research_consent == 'given' else _('відмова') }}</strong>,
+       {% trans %}від{% endtrans %} {{ student.research_consent_at.strftime('%d.%m.%Y') }}.</p>
+  {% endif %}
+
+  {% if error %}<p class="hint warn-text">{{ error }}</p>{% endif %}
+
+  <form method="post" action="/research" id="research-form">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <p>{% trans %}Чи дозволяєте ви включити вашу знеособлену послідовність запитів до
+       відкритого датасету?{% endtrans %}</p>
+    <label class="check">
+      <input type="radio" name="decision" value="given"
+             {{ 'checked' if student.research_consent == 'given' }}>
+      <span class="check-text">{% trans %}Так, дозволяю (запити увійдуть у відкритий науковий датасет під
+      випадковим ID){% endtrans %}</span>
+    </label>
+    <label class="check">
+      <input type="radio" name="decision" value="declined"
+             {{ 'checked' if student.research_consent == 'declined' }}>
+      <span class="check-text">{% trans %}Ні, не дозволяю (запити залишаться тільки на сервері викладача для
+      навчання){% endtrans %}</span>
+    </label>
+    <div class="choices">
+      <button id="research-submit" disabled>{% trans %}Підтвердити та почати роботу{% endtrans %}</button>
+    </div>
+  </form>
+  <p class="hint">{% trans %}Рішення можна змінити в кабінеті в будь-який момент до
+     публікації даних.{% endtrans %}</p>
+  <p class="hint"><a href="/cabinet">{% trans %}Вирішу пізніше{% endtrans %}</a> —
+     {% trans %}питання зʼявиться знову при наступному вході.{% endtrans %}</p>
+</section>
+<script>
+(() => {
+  const form = document.getElementById('research-form');
+  const submit = document.getElementById('research-submit');
+  const update = () => { submit.disabled = !form.querySelector('input[name=decision]:checked'); };
+  form.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}{{ lab.title }} — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+<div class="head">
+  <h1>{{ lab.title }}</h1>
+  <div class="live">поріг {{ '%.2f' | format(lab.threshold) }} ·
+    {{ lab.groups | join(', ') if lab.groups else 'групи не задані' }}
+    {% if students %} · <a href="/admin/lab/{{ lab.id }}/export.csv">CSV</a>{% endif %}</div>
+</div>
+{% if lab.note %}<p class="hint">{{ lab.note }}</p>{% endif %}
+
+{% if incomplete %}
+<p class="hint">Щоб порахувати роботу, лабораторній потрібні і група, і хоча б
+   один очікуваний запит.</p>
+{% endif %}
+
+{% if lab.forbidden %}
+<p class="hint">У цій лабораторній не має бути:
+  <b>{{ lab.forbidden | map('replace', '_', ' ') | join(', ') }}</b>.</p>
+{% endif %}
+
+<section class="block">
+  <h2>Хто до чого дійшов</h2>
+  <p class="hint">Покриття — скільки зразків студент так чи інакше відтворив.
+     Це «дійшов до цієї задачі», а не «розвʼязав правильно»: збіг нечіткий.</p>
+  <p class="hint"><b>Це оцінка, а не факт.</b> Міру перевірено поки лише на
+     складених зразках і згенерованому журналі, не на живих студентських
+     запитах — тому класти покриття в основу оцінювання ще зарано. Перевірка
+     на реальних даних попереду (З7).</p>
+  <table class="grid">
+    <thead><tr><th>Студент</th><th class="num">покриття</th><th class="num">запитів</th>
+               <th class="num">помилок</th>
+               <th class="num" title="частка відбитків, що спрацювали з першої спроби">і1</th>
+               <th class="num" title="довгі запити без паузи на набір">і2</th>
+               <th class="num" title="Error Quotient у межах цієї лабораторної">і7</th>
+               <th>Період роботи</th><th>Не дійшов до</th></tr></thead>
+    <tbody>
+    {% for s in students %}
+      <tr class="{{ 'err' if s.forbidden }}">
+        <td><a href="/admin/student/{{ s.id }}">{{ s.name or '—' }}</a>
+          {% for f in s.forbidden %}
+            <span class="errline"><b>заборонено:</b> {{ f.title }} — {{ f.n }} запит(ів)</span>
+          {% endfor %}
+        </td>
+        <td class="num">{{ s.coverage }}%</td>
+        <td class="num">{{ s.queries }}</td>
+        <td class="num">{{ s.errors }}</td>
+        {% set i = ind.get(s.id) %}
+        <td class="num">{{ '%.0f%%' | format(i.first_try * 100) if i else '—' }}</td>
+        <td class="num">{{ '%.0f%%' | format(i.paste * 100) if i else '—' }}</td>
+        <td class="num">{{ '%.2f' | format(i.eq) if i else '—' }}</td>
+        <td class="mono">{{ s.first_at.strftime('%d.%m') }} — {{ s.last_at.strftime('%d.%m') }}</td>
+        <td>{% for m in s.missing %}<div class="hint">{{ m.title or m.sql_sample[:60] }}</div>{% endfor %}</td>
+      </tr>
+    {% else %}
+      <tr><td colspan="9" class="hint">Жоден запит не дотягнув до порогу.
+        Подивіться нижче, що саме було найближче — можливо, поріг завищений.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint foot-note">
+    і1 — частка відбитків, що спрацювали з першої спроби; і2 — довгі запити,
+    надіслані без паузи на набір; і7 — Error Quotient (Jadud) у межах <b>цієї</b>
+    лабораторної. Формули заморожені:
+    <span class="mono">docs/11-indicators.md</span>. Це опис активності, а не
+    авторства: вставлений блок, що виконався одразу, у даних виглядає як робота
+    дуже сильного студента. Числа кажуть, про що спитати на захисті.
+  </p>
+</section>
+
+{% if unmatched %}
+<section class="block">
+  <h2>Найближче, але нижче порога</h2>
+  <p class="hint">Міра добре відділяє одну лабораторну від іншої, але окремі
+     задачі всередині лаби розрізняє лише приблизно — задачі однієї лаби
+     читають ті самі таблиці. Тому тут число, а не вердикт: якщо серед цих
+     запитів є робота над лабою, поріг варто знизити.</p>
+  <table class="grid">
+    <thead><tr><th class="num">схожість</th><th>Запит</th></tr></thead>
+    <tbody>
+    {% for u in unmatched %}
+      <tr><td class="num">{{ '%.2f' | format(u.score) }}</td>
+          <td class="sql"><code>{{ u.sample[:300] }}</code></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<section class="block">
+  <h2>Очікувані запити</h2>
+  <table class="grid">
+    <tbody>
+    {% for e in lab.expectations %}
+      <tr><td class="sql"><code>{{ e.sql_sample }}</code></td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endblock %}

@@ -1,0 +1,291 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Моя база{% endtrans %} — Wireward{% endblock %}
+
+{% block nav %}
+  <span class="who">{{ student.display_name or student.email or student.oidc_sub }}</span>
+  <a href="/help">{% trans %}Як підключитися{% endtrans %}</a>
+  <a href="/survey">{% trans %}Анкета{% endtrans %}</a>
+  {% if student.is_admin or student.is_teacher %}<a href="/admin">{% trans %}Адміністрування{% endtrans %}</a>{% endif %}
+  <form method="post" action="/auth/logout" class="inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <button class="link">{% trans %}Вийти{% endtrans %}</button>
+  </form>
+{% endblock %}
+
+{% block content %}
+
+<section class="card{% if fresh_token %} token-once{% endif %}">
+  <h2>{% trans %}Підключення{% endtrans %}</h2>
+
+  <table class="kv">
+    <tr><th>{% trans %}Хост{% endtrans %}</th><td class="mono">{{ db_host }}</td></tr>
+    <tr><th>{% trans %}Порт{% endtrans %}</th><td class="mono">{{ port_primary }}
+        <span class="hint">{% trans %}або{% endtrans %} {{ port_fallback }}, {% trans %}якщо перший ріжеться мережею{% endtrans %}</span></td></tr>
+    <tr><th>{% trans %}База{% endtrans %}</th><td class="mono">{{ student.db_name or '—' }}</td></tr>
+    <tr><th>{% trans %}Користувач{% endtrans %}</th><td class="mono">{{ student.role_name or '—' }}</td></tr>
+    <tr>
+      <th>{% trans %}Пароль{% endtrans %}</th>
+      <td>
+        {% if fresh_token %}
+          <p>{% trans %}Новий пароль — показується <strong>один раз</strong>. У базі
+             зберігається лише його хеш: відновити неможливо, лише випустити новий.{% endtrans %}</p>
+          <pre class="token">{{ fresh_token }}</pre>
+          <p class="hint">{% trans %}дійсний до{% endtrans %} {{ student.db_token_expires_at.strftime('%d.%m.%Y') }}.
+             {% trans %}Він уже підставлений у рядок JDBC нижче — збережіть рядок собі, після
+             перезавантаження сторінки пароль тут більше не показуватиметься.{% endtrans %}</p>
+        {% elif student.db_token_set_at %}
+          <p>{% trans %}випущено{% endtrans %} {{ student.db_token_set_at.strftime('%d.%m.%Y %H:%M') }},
+             {% trans %}дійсний до{% endtrans %} {{ student.db_token_expires_at.strftime('%d.%m.%Y') }}</p>
+        {% else %}
+          <p>{% trans %}ще не випускався — без нього підключитися не вийде{% endtrans %}</p>
+        {% endif %}
+        <form method="post" action="/cabinet/token" class="inline">
+          <input type="hidden" name="csrf_token" value="{{ csrf }}">
+          <button>{{ _('Випустити новий пароль') if student.db_token_set_at else _('Випустити пароль') }}</button>
+        </form>
+        {% if student.db_token_set_at and not fresh_token %}
+          <p class="hint">{% trans %}Старий перестане працювати негайно.{% endtrans %}</p>
+        {% endif %}
+        {% if limited %}
+          <p class="hint warn-text">{% trans %}Пароль щойно перевипускався. Наступний можна
+             випустити приблизно за{% endtrans %} {{ limited }} {% trans %}с — інакше підключення, які ви вже
+             налаштували, ламатимуться одне за одним.{% endtrans %}</p>
+        {% endif %}
+      </td>
+    </tr>
+    <tr><th>TLS</th><td>{% trans %}обовʼязковий,{% endtrans %} <span class="mono">sslmode=require</span></td></tr>
+  </table>
+
+  <h3>{% trans %}Рядок JDBC (DBeaver, DataGrip){% endtrans %}</h3>
+  {% if fresh_token %}
+  <div class="copy-row">
+    <pre class="copyable">jdbc:postgresql://{{ db_host }}:{{ port_primary }}/{{ student.db_name }}?user={{ student.role_name }}&amp;password={{ fresh_token }}&amp;sslmode=require</pre>
+    <button type="button" class="copy-btn">{% trans %}копіювати{% endtrans %}</button>
+  </div>
+  <p class="hint">{% trans %}Пароль у рядку — щойно випущений, той самий, що вище. Збережіть рядок
+     собі: після перезавантаження сторінки пароль тут більше не показуватиметься.{% endtrans %}</p>
+  {% else %}
+  <div class="copy-row">
+    <pre class="copyable">jdbc:postgresql://{{ db_host }}:{{ port_primary }}/{{ student.db_name }}?user={{ student.role_name }}&amp;sslmode=require</pre>
+    <button type="button" class="copy-btn">{% trans %}копіювати{% endtrans %}</button>
+  </div>
+  <p class="hint">{% trans %}Пароль у рядок не підставлено — випустіть пароль вище, тоді рядок
+     з паролем зʼявиться тут.{% endtrans %}</p>
+  {% endif %}
+
+  <h3>{% trans %}Як налаштувати клієнт{% endtrans %}</h3>
+  <p class="hint">{% trans %}Хост, порт, база, користувач і пароль — усе з таблиці вище.
+     Нижче — куди саме це вписати в кожному клієнті.{% endtrans %}</p>
+
+  <div class="tabs">
+    <input type="radio" name="client-tab" id="tab-psql" checked>
+    <label for="tab-psql">psql</label>
+    <input type="radio" name="client-tab" id="tab-datagrip">
+    <label for="tab-datagrip">DataGrip</label>
+    <input type="radio" name="client-tab" id="tab-dbeaver">
+    <label for="tab-dbeaver">DBeaver</label>
+    <input type="radio" name="client-tab" id="tab-pgadmin">
+    <label for="tab-pgadmin">pgAdmin</label>
+    <input type="radio" name="client-tab" id="tab-other">
+    <label for="tab-other">{% trans %}Інші клієнти{% endtrans %}</label>
+
+    <div class="tabs-panel" id="panel-psql">
+      <h3>{% trans %}Рядок для psql{% endtrans %}</h3>
+      <div class="copy-row">
+        <pre class="copyable">psql "host={{ db_host }} port={{ port_primary }} dbname={{ student.db_name }} user={{ student.role_name }} sslmode=require"</pre>
+        <button type="button" class="copy-btn">{% trans %}копіювати{% endtrans %}</button>
+      </div>
+
+      <div class="fallback-note">
+        <h3>{% trans %}Якщо порт{% endtrans %} {{ port_primary }} {% trans %}закритий{% endtrans %}</h3>
+        <div class="copy-row">
+          <pre class="copyable">psql "host={{ db_host }} port={{ port_fallback }} dbname={{ student.db_name }} user={{ student.role_name }} sslmode=require"</pre>
+          <button type="button" class="copy-btn">{% trans %}копіювати{% endtrans %}</button>
+        </div>
+      </div>
+
+      <ol>
+        <li>{% trans %}Скопіюйте готовий рядок вище і виконайте його в терміналі.{% endtrans %}</li>
+        <li>{% trans %}Пароль у рядку не вказано навмисно — psql запитає його окремим
+            рядком{% endtrans %} <span class="mono">Password for user …:</span>{% trans %}, вставте
+            туди пароль із таблиці вище.{% endtrans %}</li>
+        <li>{% trans %}Сертифікат сервера справжній (Let's Encrypt), тож жодного вікна з
+            підтвердженням недовіреного сертифіката при першому підключенні не буде —{% endtrans %}
+            <span class="mono">sslmode=require</span> {% trans %}у рядку вже вмикає TLS.{% endtrans %}</li>
+      </ol>
+    </div>
+
+    <div class="tabs-panel" id="panel-datagrip">
+      <ol>
+        <li>{% trans %}Database → New → Data Source →{% endtrans %} <strong>PostgreSQL</strong>.</li>
+        <li>{% trans %}Скопіюйте рядок JDBC вище і вставте його в поле{% endtrans %} <em>URL</em>
+            {% trans %}(унизу вікна) — клієнт сам розбере хост, порт, базу, користувача й увімкне
+            SSL: усі параметри, включно з{% endtrans %} <span class="mono">sslmode</span>,
+            {% trans %}уже в рядку.{% endtrans %}</li>
+        <li>{% trans %}Пароль запитається у вікні{% endtrans %} <em>Test Connection</em>
+            {% trans %}при першій спробі підключитися — вставте той, що з таблиці вище, і за
+            бажання позначте, щоб його запамʼятали.{% endtrans %}</li>
+      </ol>
+      <div class="fallback-note">
+        <h3>! {% trans %}Дерево обʼєктів показує зайве{% endtrans %}</h3>
+        <p>{% trans %}На вкладці{% endtrans %} <em>Options</em> {% trans %}увімкніть{% endtrans %}
+           <em>Single database mode</em> — {% trans %}без цього навігатор намагається показати
+           всі бази кластера, хоча підключитися можна лише до своєї.{% endtrans %}</p>
+      </div>
+    </div>
+
+    <div class="tabs-panel" id="panel-dbeaver">
+      <ol>
+        <li>{% trans %}Database → New Database Connection →{% endtrans %} <strong>PostgreSQL</strong>.</li>
+        <li>{% trans %}Скопіюйте рядок JDBC вище і вставте його в поле{% endtrans %} <em>URL</em>
+            {% trans %}на вкладці{% endtrans %} <em>Main</em>
+            {% trans %}(унизу вікна) — клієнт сам розбере хост, порт, базу, користувача й увімкне
+            SSL: усі параметри, включно з{% endtrans %} <span class="mono">sslmode</span>,
+            {% trans %}уже в рядку.{% endtrans %}</li>
+        <li>{% trans %}Пароль вводиться просто на вкладці{% endtrans %} <em>Main</em>{% trans %}, у полі{% endtrans %}
+            <em>Password</em> — {% trans %}той, що з таблиці вище. Позначка{% endtrans %}
+            <em>Save password locally</em> {% trans %}зберігає його для наступних разів.{% endtrans %}</li>
+      </ol>
+    </div>
+
+    <div class="tabs-panel" id="panel-pgadmin">
+      <ol>
+        <li>{% trans %}Правою кнопкою на{% endtrans %} <em>Servers</em> → <em>Register</em> → <em>Server…</em></li>
+        <li>{% trans %}На вкладці{% endtrans %} <em>General</em> {% trans %}впишіть будь-яку назву — вона лише
+            для вас, сервера не стосується.{% endtrans %}</li>
+        <li>{% trans %}На вкладці{% endtrans %} <em>Connection</em> {% trans %}впишіть{% endtrans %}
+            <em>Host name/address</em>, <em>Port</em>, <em>Maintenance database</em> ({% trans %}це поле — база з
+            таблиці вище{% endtrans %}) {% trans %}і{% endtrans %} <em>Username</em>.</li>
+        <li>{% trans %}На вкладці{% endtrans %} <em>SSL</em> {% trans %}виставте{% endtrans %}
+            <em>SSL mode</em> = <em>Require</em>.</li>
+        <li>{% trans %}Пароль можна одразу вписати на вкладці{% endtrans %} <em>Connection</em>
+            {% trans %}(поле{% endtrans %} <em>Password</em>{% trans %}){% endtrans %} {% trans %}або ввести пізніше, коли pgAdmin
+            запитає його при підключенні.{% endtrans %}</li>
+      </ol>
+    </div>
+
+    <div class="tabs-panel" id="panel-other">
+      <p>{% trans %}Підійде будь-який клієнт чи бібліотека, що вміє звичайний
+         wire-протокол PostgreSQL і TLS — параметри ті самі: хост, порт, база,
+         користувач, пароль і{% endtrans %} <span class="mono">sslmode=require</span>.</p>
+      <p class="hint">{% trans %}Приклад для Python —{% endtrans %}
+         <a href="https://www.psycopg.org/psycopg3/docs/basic/params.html" target="_blank" rel="noopener">psycopg3</a>,
+         {% trans %}для Java —{% endtrans %}
+         <a href="https://jdbc.postgresql.org/documentation/use/" target="_blank" rel="noopener">pgJDBC</a>.
+         {% trans %}В обох, як і скрізь тут, головне не забути ввімкнути SSL.{% endtrans %}</p>
+    </div>
+  </div>
+
+  <p class="hint">{% trans %}DBeaver, DataGrip, помилки підключення і межі —{% endtrans %}
+     <a href="/help">{% trans %}коротка довідка{% endtrans %}</a>.</p>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Місце{% endtrans %}</h2>
+  <div class="meter" role="img"
+       aria-label="{{ _('Використано %(pct)s відсотків квоти', pct=pct) }}">
+    <div class="meter-fill {{ 'warn' if pct >= 80 else '' }}" style="width: {{ pct }}%"></div>
+  </div>
+  <p class="mono">{{ (used / 1048576) | round(1) }} {% trans %}МБ з{% endtrans %} {{ (quota / 1048576) | round(0) | int }} {% trans %}МБ{% endtrans %} ({{ pct }}%)</p>
+  {% if pct >= 80 %}
+    <p class="hint warn-text">{% trans %}Місце майже закінчилося. Видаліть зайві таблиці або
+       перестворіть базу, поки лабораторна не зламалася посеред роботи.{% endtrans %}</p>
+  {% endif %}
+</section>
+
+{% if here %}
+<section class="card">
+  <h2>{% trans %}Де ви зараз{% endtrans %}</h2>
+  <p class="hint">{% trans %}Остання за часом лабораторна у вашому журналі. Це не оцінка й
+     не строк: у лабораторних немає меж, і повертатися до попередніх можна
+     будь-коли.{% endtrans %}</p>
+  <table class="kv">
+    <tr><th>{% trans %}Робота{% endtrans %}</th><td>{{ here.title }}</td></tr>
+    <tr><th>{% trans %}Відтворено зразків{% endtrans %}</th><td class="mono">{{ here.done }} {% trans %}з{% endtrans %} {{ here.total }}</td></tr>
+    {% if here.missing %}
+    <tr><th>{% trans %}Ще не бачили{% endtrans %}</th>
+        <td>{{ here.missing | map(attribute='title') | select | join('; ') }}
+            <span class="hint">{% trans %}зіставлення нечітке: якщо задачу ви зробили інакше,
+              ніж у зразку, вона може сюди потрапити помилково{% endtrans %}</span></td></tr>
+    {% endif %}
+    <tr><th>{% trans %}Остання спроба{% endtrans %}</th><td class="mono">{{ here.last_at.strftime('%d.%m %H:%M') }}</td></tr>
+  </table>
+</section>
+{% endif %}
+
+<section class="card">
+  <h2>{% trans %}Як ішла ваша робота{% endtrans %}</h2>
+  {% if ind and ind.queries %}
+    <p class="hint">{% trans %}Те саме, що бачить викладач — без винятків. Числа описують
+       <b>процес</b>, а не якість і не оцінку.{% endtrans %}</p>
+    <table class="kv">
+      <tr><th>{% trans %}Запитів у журналі{% endtrans %}</th><td class="mono">{{ ind.queries }}
+          <span class="hint">{% trans %}різних за формою:{% endtrans %} {{ ind.fingerprints }}</span></td></tr>
+      <tr><th>{% trans %}Спрацювало одразу{% endtrans %}</th><td class="mono">{{ '%.0f' | format(ind.first_try * 100) }}%
+          <span class="hint">{% trans %}запитів, які вийшли з першої спроби{% endtrans %}</span></td></tr>
+      <tr><th>{% trans %}Помилок{% endtrans %}</th><td class="mono">{{ ind.errors }}
+          <span class="hint">{% trans %}з них синтаксичних{% endtrans %} {{ '%.0f' | format(ind.syntax_share * 100) }}% —
+          {% trans %}це нормальна частина роботи, а не порушення{% endtrans %}</span></td></tr>
+      <tr><th>{% trans %}Темп{% endtrans %}</th><td class="mono">{{ ind.tempo }} {% trans %}с{% endtrans %}
+          <span class="hint">{% trans %}медіанна пауза між запитами{% endtrans %}</span></td></tr>
+      <tr><th>{% trans %}Застрягань{% endtrans %}</th><td class="mono">{{ ind.stuck }}
+          {% if ind.resolved is not none %}
+            <span class="hint">{% trans %}вибралися самі з{% endtrans %} {{ '%.0f' | format(ind.resolved * 100) }}%</span>
+          {% endif %}</td></tr>
+    </table>
+    <p class="hint">{% trans %}Застрягання — це пʼять і більше невдалих спроб того самого
+       запиту поспіль. Те, що ви з них вибралися, — найкращий доказ на захисті,
+       який взагалі можна мати.{% endtrans %}</p>
+  {% elif ind %}
+    <p class="hint">{% trans %}Запитів ще немає — числа зʼявляться після першої роботи в базі.{% endtrans %}</p>
+  {% else %}
+    <p class="hint">{% trans %}Ще рахується. Перерахунок іде раз на дві хвилини.{% endtrans %}</p>
+  {% endif %}
+</section>
+
+<section class="card">
+  <h2>{% trans %}Участь у дослідженні{% endtrans %}</h2>
+  {% if student.research_consent == 'given' %}
+    <p>{% trans %}Ви погодилися на використання знеособлених даних у науковій публікації{% endtrans %}
+       {{ student.research_consent_at.strftime('%d.%m.%Y') }}.</p>
+  {% elif student.research_consent == 'declined' %}
+    <p>{% trans %}Ви відмовилися від участі{% endtrans %} {{ student.research_consent_at.strftime('%d.%m.%Y') }}.
+       {% trans %}На курс, доступ до бази й оцінку це не впливає.{% endtrans %}</p>
+  {% else %}
+    <p>{% trans %}Питання ще не вирішене.{% endtrans %}</p>
+  {% endif %}
+  <p><a class="button secondary" href="/research">{{ _('Змінити рішення') if student.research_consent != 'pending' else _('Прочитати й вирішити') }}</a></p>
+</section>
+
+<section class="card danger">
+  <h2>{% trans %}Перестворити базу{% endtrans %}</h2>
+  <p>{% trans %}Поточна база буде <strong>видалена разом з усіма даними</strong> і створена
+     заново, порожня. Журнал ваших запитів при цьому зберігається.{% endtrans %}</p>
+  <form method="post" action="/cabinet/recreate"
+        onsubmit="return confirm('{{ _('Видалити базу %(db)s з усіма даними?', db=student.db_name) }}')">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+    <button class="danger">{% trans %}Видалити й створити заново{% endtrans %}</button>
+  </form>
+</section>
+
+<section class="card">
+  <h2>{% trans %}Останні події{% endtrans %}</h2>
+  {% if events %}
+  <table class="log">
+    <thead><tr><th>{% trans %}Коли{% endtrans %}</th><th>{% trans %}Подія{% endtrans %}</th><th>{% trans %}Хто{% endtrans %}</th></tr></thead>
+    <tbody>
+    {% for event, actor, at in events %}
+      <tr>
+        <td class="mono">{{ at.strftime('%d.%m %H:%M') }}</td>
+        <td>{{ event }}</td>
+        <td class="hint">{{ actor }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+    <p class="hint">{% trans %}Поки порожньо.{% endtrans %}</p>
+  {% endif %}
+</section>
+
+{% endblock %}

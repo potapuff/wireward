@@ -1,0 +1,128 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Студенти — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>Студенти</h1>
+  {{ a.period_picker(days, periods, '/admin/students') }}
+</div>
+
+<div class="scroll">
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Студент</th>
+      <th>Група</th>
+      <th class="num">Розмір</th>
+      <th class="num">Запитів</th>
+      <th class="num">Помилок</th>
+      <th class="num">Сесій</th>
+      <th>Зараз над чим</th>
+      <th>Активність (14 днів)</th>
+      <th>Остання</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for r in rows %}
+    {% set pct = (r.used_bytes * 100 // r.quota_bytes) if r.quota_bytes and r.used_bytes else 0 %}
+    {% set errpct = (r.errors * 100 // r.total) if r.total else 0 %}
+    <tr class="{{ 'muted' if not r.total }}">
+      <td>
+        <a href="/admin/student/{{ r.id }}">{{ r.display_name or r.email or '—' }}</a>
+        {% if r.disabled_at %}<span class="tag off">вимкнено</span>{% endif %}
+        {% if r.is_admin %}<span class="tag">адмін</span>{% endif %}
+        {% if not r.consented_at %}<span class="tag warn">без згоди</span>{% endif %}
+        {% if not r.db_name %}<span class="tag warn">без бази</span>{% endif %}
+      </td>
+      <td>{{ r.groups | join(', ') if r.groups else '—' }}</td>
+      <td class="num">
+        {% if r.used_bytes is not none %}
+          <span class="{{ 'hot' if pct >= 80 }}">{{ (r.used_bytes / 1048576) | round(1) }} МБ</span>
+          <span class="hint">{{ pct }}%</span>
+        {% else %}<span class="hint">—</span>{% endif %}
+      </td>
+      <td class="num">{{ r.total or 0 }}</td>
+      <td class="num">
+        {% if r.errors %}<span class="{{ 'hot' if errpct >= 40 }}">{{ r.errors }}</span>
+          <span class="hint">{{ errpct }}%</span>
+        {% else %}<span class="hint">0</span>{% endif %}
+      </td>
+      <td class="num">{{ r.sessions or 0 }}</td>
+      {% set h = here.get(r.id | string) %}
+      <td class="nowcell">
+        {% if h %}
+          <a href="/admin/lab/{{ h.lab_id }}">{{ h.title }}</a>
+          <span class="hint">{{ h.done }}/{{ h.total }}{% if h.also %} +{{ h.also | length }}{% endif %} ·
+            {% if h.idle_hours < 24 %}сьогодні
+            {% else %}{{ (h.idle_hours / 24) | round(0) | int }} дн.{% endif %}</span>
+        {% else %}<span class="hint">—</span>{% endif %}
+      </td>
+      <td class="sparkcell">{{ a.sparkline(spark.get(r.id|string, [])) }}</td>
+      <td class="num">
+        {% if r.last_query_at %}{{ r.last_query_at.strftime('%d.%m %H:%M') }}
+        {% else %}<span class="hint">не працював</span>{% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="9" class="hint">Жодного студента ще немає.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% if clients %}
+<div class="clients">
+  <span class="clients-label">Клієнти за період:</span>
+  {% for c in clients %}
+    <span class="client-chip">
+      {{ c.name }}{% if c.version %} <b>{{ c.version }}</b>{% endif %}
+      <i>{{ c.sessions }}</i>
+      {% if c.guessed %}<span class="tag warn">здогад</span>{% endif %}
+    </span>
+  {% endfor %}
+</div>
+{% endif %}
+
+<p class="hint foot-note">
+  Частка помилок і кількість запитів описують <em>процес роботи</em>, а не її
+  якість: висока частка помилок нерідко означає, що студент пробував сам, а не
+  вставив готове. Порівнювати студентів за цими числами не варто.
+</p>
+
+{% if sus.n or sus.reflections %}
+<section class="block">
+  <h2>Анкети</h2>
+  <p class="hint">
+    SUS (System Usability Scale) — стандартна шкала 0—100. Це <b>не відсотки</b>
+    і не оцінка: 68 — середнє по галузі, і саме з ним порівнюють. Окремі
+    відповіді на рефлексію тут не показуються навмисно: студент писав їх як
+    анкету, а не як публічний допис.
+  </p>
+  <div class="tiles">
+    <div class="tile"><span class="tile-label">SUS · середній</span>
+      <b>{{ sus.avg if sus.avg is not none else '—' }}</b>
+      <span>{{ sus.n }} відповід(ей){% if sus.min is not none %},
+        від {{ sus.min }} до {{ sus.max }}{% endif %}</span></div>
+    <div class="tile"><span class="tile-label">рефлексія</span>
+      <b>{{ sus.reflections }}</b><span>заповнених анкет</span></div>
+  </div>
+  {% if sus.per_item %}
+  <table class="grid">
+    <thead><tr><th class="num">№</th><th>Твердження</th><th class="num">середнє (1—5)</th></tr></thead>
+    <tbody>
+    {% for it in sus.per_item %}
+      <tr><td class="num">{{ it.i }}</td><td>{{ it.text }}</td>
+          <td class="num">{{ it.avg }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p class="hint foot-note">Непарні твердження сформульовані позитивно, парні —
+     негативно; чергування є частиною методики, тому «5» у рядку 2 — це погано,
+     а не добре.</p>
+  {% endif %}
+</section>
+{% endif %}
+{% endblock %}

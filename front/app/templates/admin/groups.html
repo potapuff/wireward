@@ -1,0 +1,64 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Групи — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>Групи</h1>
+  {{ a.period_picker(days, periods, '/admin/groups') }}
+</div>
+
+<p class="hint">
+  Група тут — членство на сьогодні (<code>obs.student_groups</code>, поле
+  <code>until</code> порожнє). Хто в якій групі був у минулому семестрі, теж
+  збережено, але на цей перелік не потрапляє.
+</p>
+
+<div class="scroll">
+<table class="grid">
+  <thead>
+    <tr>
+      <th>Група</th>
+      <th class="num">Студентів</th>
+      <th class="num">Вимкнено</th>
+      <th class="num">Запитів</th>
+      <th class="num">Помилок</th>
+      <th>Остання активність</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for g in rows %}
+    {% set errpct = (g.errors * 100 // g.total) if g.total else 0 %}
+    <tr class="{{ 'muted' if not g.total }}">
+      <td><a href="/admin/group/{{ g.name | urlencode }}?days={{ days }}"><b>{{ g.name }}</b></a></td>
+      <td class="num">{{ g.students }}</td>
+      <td class="num">
+        {% if g.disabled %}<span class="tag off">{{ g.disabled }}</span>
+        {% else %}<span class="hint">0</span>{% endif %}
+      </td>
+      <td class="num">{{ g.total or 0 }}</td>
+      <td class="num">
+        {% if g.errors %}<span class="{{ 'hot' if errpct >= 40 }}">{{ g.errors }}</span>
+          <span class="hint">{{ errpct }}%</span>
+        {% else %}<span class="hint">0</span>{% endif %}
+      </td>
+      <td class="num">
+        {% if g.last_bucket %}{{ g.last_bucket.strftime('%d.%m %H:%M') }}
+        {% else %}<span class="hint">не працювали</span>{% endif %}
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="6" class="hint">Жодної групи ще не заведено.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<p class="hint foot-note">
+  Щоб побачити студентів окремо, без групи, або перевірити зведення по всіх
+  одразу — екран <a href="/admin/students">«Студенти»</a> лишається поіменним
+  списком, як і раніше.
+</p>
+{% endblock %}

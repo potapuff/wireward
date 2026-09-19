@@ -1,0 +1,14 @@
+# Локальний HTTPS для розробки: без ACME, без публічного імені. Сертифікат —
+# власна локальна CA Caddy (самопідписаний), тому браузер спершу поскаржиться —
+# це очікувано, довірити один раз і забути. Профіль server (Caddyfile,
+# Let's Encrypt) цей файл не чіпає й не замінює.
+
+localhost:8443 {
+	tls internal
+
+	encode zstd gzip
+
+	reverse_proxy front:8000 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+}

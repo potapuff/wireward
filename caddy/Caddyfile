@@ -1,0 +1,44 @@
+# Єдиний сервіс Observer, який слухає 80 і 443. Усе інше сидить за ним.
+#
+# Навіщо взагалі окремий шар: без TLS не працює половина рішень, ухвалених
+# раніше. Сесійна кука має прапорець Secure (браузер просто не збереже її з
+# http), OIDC redirect_uri у Mix зареєстрований на https, а ADR-012 покладає
+# довіру до токенів саме на TLS-канал. Тобто це не «прикраса до релізу», а
+# умова, за якої решта схеми взагалі тримається.
+#
+# Сертифікат Caddy бере сам (ACME) — за умови, що імʼя з WEB_HOST резолвиться
+# у цю машину і 80 порт назовні відкритий. HTTP-виклик ACME ходить саме в 80,
+# тому закривати його «бо все одно https» не можна.
+
+{
+	email {$ACME_EMAIL}
+	# Локально або на стенді без публічного імені: підставити
+	# `acme_ca https://acme-staging-v02.api.letsencrypt.org/directory`,
+	# щоб не спалити ліміт видач Let's Encrypt на невдалих спробах.
+}
+
+{$WEB_HOST} {
+	encode zstd gzip
+
+	# Заголовки, які інакше довелося б виставляти в FastAPI руками.
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "same-origin"
+		-Server
+	}
+
+	reverse_proxy front:8000 {
+		header_up X-Forwarded-Proto {scheme}
+	}
+
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 10mb
+			roll_keep 3
+		}
+		# Куки — це сесії студентів; у журналі доступу їм не місце.
+		format json
+	}
+}

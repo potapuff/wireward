@@ -1,0 +1,44 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Події баз — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>Події баз</h1>
+  {{ a.period_picker(days, periods, '/admin/events') }}
+</div>
+
+<div class="scroll">
+<table class="grid">
+  <thead><tr><th>Коли</th><th>Студент</th><th>Подія</th><th>Хто</th><th>Деталі</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr class="{{ 'err' if r.event in ('quota_exceeded', 'dev_login', 'proxy_passthrough_on') }}">
+      <td class="mono">{{ r.at.strftime('%d.%m %H:%M:%S') }}</td>
+      <td><a href="/admin/student/{{ r.student_id }}">{{ r.display_name or '—' }}</a></td>
+      <td>
+        {{ r.event }}
+        {% if r.event == 'recreated' and r.details and r.details.get('drop_observed') is false %}
+          <span class="tag warn">видалення не спостерігали</span>
+        {% endif %}
+      </td>
+      <td class="hint">{{ r.actor }}</td>
+      <td class="mono small hint">{{ r.details }}</td>
+    </tr>
+  {% else %}
+    <tr><td colspan="5" class="hint">Подій за цей період немає.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+
+<p class="hint foot-note">
+  <code>dropped</code> зі <code>via: sql</code> — студент видалив базу з клієнта;
+  проксі побачив сам оператор. <code>recreated</code> із позначкою «видалення не
+  спостерігали» означає, що база зникла між входами, а моменту видалення в
+  журналі немає — так виглядають старі записи, зроблені до того, як проксі
+  навчився ловити <code>DROP DATABASE</code>.
+</p>
+{% endblock %}

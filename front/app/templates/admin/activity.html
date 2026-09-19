@@ -1,0 +1,239 @@
+{% extends "admin/base.html" %}
+{% import "admin/base.html" as a with context %}
+{% block title %}Активність — Wireward{% endblock %}
+
+{% block content %}
+{{ a.gap_banner(gaps) }}
+
+<div class="head">
+  <h1>Активність{% if who %} · {{ who }}{% endif %}</h1>
+  {{ a.period_picker(days, periods, '/admin/activity', '&student=' ~ (student or '')) }}
+</div>
+
+<form class="filters" method="get" action="/admin/activity">
+  <input type="hidden" name="days" value="{{ days }}">
+  <label>Студент
+    <select name="student" onchange="this.form.submit()">
+      <option value="">усі разом</option>
+      {% for s in students %}
+        <option value="{{ s.id }}" {{ 'selected' if s.id == student }}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  <noscript><button>Показати</button></noscript>
+</form>
+
+<div class="tiles">
+  <div class="tile"><b>{{ totals.queries }}</b><span>запитів</span></div>
+  <div class="tile"><b class="{{ 'hot' if totals.error_pct >= 40 }}">{{ totals.errors }}</b>
+    <span>помилок, {{ totals.error_pct }}%</span></div>
+  <div class="tile"><b>{{ (totals.active_seconds / 60) | round(0) | int }}</b><span>хвилин за клавіатурою</span></div>
+  <div class="tile"><b>{{ totals.active_days }}</b><span>днів із роботою</span></div>
+</div>
+
+<!-- ------------------------------------------------------------ теплокарта -->
+<section class="block">
+  <h2>Коли працював</h2>
+  <p class="hint">
+    {% if heat.unit == 'week' %}
+      Тиждень × година. На довгому проміжку рядком стає тиждень: сто рядків по
+      днях перестають бути картинкою. Години лишаються колонками — питання
+      «увечері чи вранці» від зміни масштабу не зникає. Порожніх тижнів у
+      таблиці немає: рядок зʼявляється там, де була робота.
+    {% else %}
+      День × година. Одразу видно, чи робота йшла рівномірно, чи все зʼявилося
+      за одну ніч перед здачею.
+    {% endif %}
+  </p>
+
+  {% if heat.peak %}
+  <div class="scroll">
+    <table class="heat">
+      <thead>
+        <tr><th></th>
+          {% for h in range(24) %}<th class="{{ 'mark' if h % 6 == 0 }}">{{ '%02d'|format(h) }}</th>{% endfor %}
+        </tr>
+      </thead>
+      <tbody>
+      {% for d in heat.days %}
+        <tr>
+          {% if heat.unit == 'week' %}
+            <th class="day">{{ d.strftime('%d.%m') }}<span class="wd">тижд.</span></th>
+          {% else %}
+            <th class="day">{{ d.strftime('%d.%m') }}<span class="wd">{{ ['пн','вт','ср','чт','пт','сб','нд'][d.weekday()] }}</span></th>
+          {% endif %}
+          {% for h in range(24) %}
+            {% set c = heat.cells.get((d, h)) %}
+            {% if c %}
+              {% set lvl = (c.queries / heat.peak) %}
+              <td class="cell {{ 'has-err' if c.errors and c.errors * 2 >= c.queries }}"
+                  style="--lvl: {{ (0.14 + lvl * 0.86) | round(3) }}"
+                  title="{{ 'тиждень з ' if heat.unit == 'week' }}{{ d.strftime('%d.%m') }}, {{ '%02d'|format(h) }}:00 — {{ c.queries }} запитів, {{ c.errors }} помилок, {{ (c.secs / 60) | round(1) }} хв активності"></td>
+            {% else %}
+              <td class="cell empty"></td>
+            {% endif %}
+          {% endfor %}
+        </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="legend">
+    <span>менше</span>
+    {% for i in range(5) %}<i class="cell" style="--lvl: {{ 0.14 + i * 0.215 }}"></i>{% endfor %}
+    <span>більше · пік {{ heat.peak }} запитів за
+      {{ 'годину тижня' if heat.unit == 'week' else 'годину' }}</span>
+    <span class="sep"></span>
+    <i class="cell has-err" style="--lvl: .8"></i><span>більшість запитів години — помилкові</span>
+  </div>
+  {% else %}
+    <p class="hint">За цей період активності немає.</p>
+  {% endif %}
+</section>
+
+<!-- --------------------------------------------------------- стрічка сесій -->
+{% if student %}
+<section class="block">
+  <h2>Як ішла робота</h2>
+  <p class="hint">Кожна смуга — одне підключення, засічки — помилки.
+     Читається як «три години з паузами», а не «417 запитів».</p>
+
+  {% if timeline %}
+  {% set by_day = {} %}
+  {% for s in timeline %}
+    {% set _ = by_day.setdefault(s.started_at.date(), []).append(s) %}
+  {% endfor %}
+  <div class="timeline">
+    {% for day, items in by_day.items() | sort(reverse=true) %}
+      <div class="tl-row">
+        <div class="tl-day">{{ day.strftime('%d.%m') }}</div>
+        <svg viewBox="0 0 1440 26" preserveAspectRatio="none" class="tl-svg"
+             role="img" aria-label="Сесії за {{ day.strftime('%d.%m') }}">
+          {% for h in range(0, 25, 3) %}
+            <line x1="{{ h * 60 }}" y1="0" x2="{{ h * 60 }}" y2="26"
+                  stroke="currentColor" stroke-width="1" opacity=".14"></line>
+          {% endfor %}
+          {% for s in items %}
+            {% set x0 = s.started_at.hour * 60 + s.started_at.minute %}
+            {% set x1 = (s.ended_at.hour * 60 + s.ended_at.minute) if s.ended_at.date() == day else 1440 %}
+            <rect x="{{ x0 }}" y="6" width="{{ [x1 - x0, 3] | max }}" height="14" rx="2"
+                  class="tl-bar" opacity=".55"></rect>
+            {% for e in s.error_times %}
+              {% if e.date() == day %}
+                <line x1="{{ e.hour * 60 + e.minute }}" y1="4" x2="{{ e.hour * 60 + e.minute }}" y2="22"
+                      class="tl-err" stroke-width="1.5"></line>
+              {% endif %}
+            {% endfor %}
+          {% endfor %}
+        </svg>
+      </div>
+    {% endfor %}
+    <div class="tl-axis">
+      <div class="tl-day"></div>
+      <div class="tl-hours">{% for h in range(0, 25, 3) %}<span>{{ '%02d'|format(h) }}</span>{% endfor %}</div>
+    </div>
+  </div>
+  {% else %}
+    <p class="hint">Підключень за цей період не було.</p>
+  {% endif %}
+</section>
+{% endif %}
+
+<!-- ---------------------------------------------------------- крива помилок -->
+<section class="block">
+  <h2>Чи ставало легше</h2>
+  <p class="hint">Частка невдалих запитів у часі. Спадна крива в межах заняття —
+     це буквально видиме навчання. Висока частка сама по собі не погана: вона
+     нерідко означає, що студент пробував сам.</p>
+
+  {% if curve %}
+  {% set w = 900 %}{% set h = 150 %}
+  <div class="scroll chart">
+    <svg viewBox="0 0 {{ w }} {{ h + 26 }}" class="curve" role="img"
+         aria-label="Частка помилок у часі, максимум 100 відсотків">
+      {% for g in [0, 25, 50, 75, 100] %}
+        <line x1="34" y1="{{ h - g * h / 100 }}" x2="{{ w }}" y2="{{ h - g * h / 100 }}"
+              stroke="currentColor" opacity=".13" stroke-width="1"></line>
+        <text x="0" y="{{ h - g * h / 100 + 4 }}" class="ax">{{ g }}%</text>
+      {% endfor %}
+      {% set n = curve | length %}
+      {% set step = (w - 40) / (n if n > 1 else 1) %}
+      {% for p in curve %}
+        {% set x = 38 + loop.index0 * step %}
+        {% set bh = p.pct * h / 100 %}
+        <rect x="{{ x | round(1) }}" y="{{ (h - bh) | round(1) }}"
+              width="{{ [step - 2, 1.5] | max | round(1) }}" height="{{ [bh, 1] | max | round(1) }}"
+              class="curve-bar" opacity="{{ 0.35 + (p.queries / (curve | map(attribute='queries') | max)) * 0.6 }}">
+          <title>{{ p.at.strftime('%d.%m %H:%M') }} — {{ p.queries }} запитів, {{ p.errors }} помилок ({{ p.pct }}%)</title>
+        </rect>
+      {% endfor %}
+      {% for p in curve %}
+        {% if loop.first or loop.last or loop.index0 % ((n // 8) + 1) == 0 %}
+          <text x="{{ (38 + loop.index0 * step) | round(1) }}" y="{{ h + 18 }}" class="ax">
+            {{ p.at.strftime('%d.%m') if n > 30 else p.at.strftime('%d.%m %H:%M') }}</text>
+        {% endif %}
+      {% endfor %}
+    </svg>
+  </div>
+  <p class="hint">Насиченість стовпчика — скільки запитів було в цей момент:
+     блідий стовпчик зі 100% помилок може означати одну-єдину спробу.</p>
+  {% else %}
+    <p class="hint">Даних за цей період немає.</p>
+  {% endif %}
+</section>
+
+<!-- ------------------------------------------------------------ застрягання -->
+<section class="block">
+  <h2>Де застряг</h2>
+  <p class="hint">Серії щонайменше {{ 5 }} невдалих спроб одного й того самого
+     запиту підряд. Серія рветься будь-яким успіхом або іншим запитом між
+     спробами — тобто це саме «не рухався далі», а не «зробив багато помилок».</p>
+
+  {% if stuck %}
+  <div class="scroll">
+  <table class="grid">
+    <thead><tr>
+      {% if not student %}<th>Студент</th>{% endif %}
+      <th class="num">спроб</th><th>Стан</th><th>Помилка</th><th>Запит</th><th>Коли</th>
+    </tr></thead>
+    <tbody>
+    {% for s in stuck %}
+      <tr class="{{ '' if s.resolved else 'err' }}">
+        {% if not student %}
+        <td><a href="/admin/activity?student={{ s.student_id }}&days={{ days }}">{{ s.display_name or '—' }}</a></td>
+        {% endif %}
+        <td class="num hot">{{ s.attempts }}</td>
+        <td>
+          {% if s.resolved %}<span class="tag ok-tag">розібрався</span>
+          {% else %}<span class="tag off">кинув</span>{% endif %}
+        </td>
+        <td class="mono small">{{ s.sqlstate }}<br><span class="hint">{{ s.error_message }}</span></td>
+        <td class="sql"><code>{{ s.sample_sql }}</code></td>
+        <td class="mono small">{{ s.first_at.strftime('%d.%m %H:%M') }}<br>
+          <span class="hint">{{ ((s.last_at - s.first_at).total_seconds() / 60) | round(0) | int }} хв</span></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  <p class="hint foot-note">«Розібрався» означає, що пізніше в тій самій сесії
+     той самий запит виконався успішно. «Кинув» — що ні: це найкращий матеріал
+     для розбору на парі.</p>
+  {% else %}
+    <p class="hint">Серій підряд невдалих спроб не знайдено.</p>
+  {% endif %}
+</section>
+
+{% if request.state.is_admin %}
+<form method="post" action="/admin/activity/rebuild" class="rebuild">
+    <input type="hidden" name="csrf_token" value="{{ csrf }}">
+  <button class="link">Перебудувати агрегати з журналу</button>
+  {% if rebuild == 'busy' %}
+  <span class="hint warn-text">Перебудова вже виконується — зачекайте, поки завершиться.</span>
+  {% else %}
+  <span class="hint">Потрібно лише після зміни правил підрахунку: агрегати
+    похідні й оновлюються фоново раз на хвилину.</span>
+  {% endif %}
+</form>
+{% endif %}
+{% endblock %}

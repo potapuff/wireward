@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}{% trans %}Wireward — журнал SQL для лабораторних{% endtrans %}{% endblock %}
+
+{% block nav %}
+  <a href="#teacher">{% trans %}Викладачу{% endtrans %}</a>
+  <a href="#student">{% trans %}Студенту{% endtrans %}</a>
+  <a href="#honest">{% trans %}Що записується{% endtrans %}</a>
+  <a class="button small-btn" href="/auth/login" style="margin-left:auto">{% trans %}Вхід через LMS{% endtrans %}</a>
+{% endblock %}
+
+{% block content %}
+
+<section class="hero wirebg">
+  <div class="hd">{% trans %}розумні лабораторні з баз даних{% endtrans %}</div>
+  <h1><em>{% trans %}Готова відповідь нічого не каже.{% endtrans %}</em><br>
+      {% trans %}Wireward показує,{% endtrans %} <span class="amber">{% trans %}як студент до неї йшов{% endtrans %}</span>.</h1>
+  <div class="choices">
+    <a class="button" href="#teacher">{% trans %}Я викладач — що це дає{% endtrans %}</a>
+    <a class="button secondary" href="#student">{% trans %}Я студент — як підключитися{% endtrans %}</a>
+  </div>
+</section>
+
+<section class="feature-slider">
+  <div class="slider-track">
+
+    <article class="slide">
+      <div class="hd">{% trans %}чого не бачить серверний лог{% endtrans %}</div>
+      <div class="proof-grid">
+        <div class="proof-code">
+          <table class="grid">
+            <thead><tr><th>seq</th><th>sqlstate</th><th>{% trans %}запит{% endtrans %}</th></tr></thead>
+            <tbody>
+              <tr><td class="num mono">1</td><td class="mono ok">—</td>
+                  <td class="sql"><code>select name, price from products</code></td></tr>
+              <tr class="err"><td class="num mono">2</td><td class="mono amber">42703</td>
+                  <td class="sql"><code>select name, prise from products where price &gt; 100</code></td></tr>
+              <tr class="err"><td class="num mono">3</td><td class="mono amber">42601</td>
+                  <td class="sql"><code>SELCT name, price FROM products WHERE price &gt; 100;</code></td></tr>
+              <tr><td class="num mono">4</td><td class="mono ok">—</td>
+                  <td class="sql"><code>select name, price from products where price &gt; 100</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="proof-note">
+          <p>{% trans %}<b>Рядок 3</b> — опечатка в ключовому слові. Такий запит падає на
+             розборі й до виконавця не доходить: для pgAudit і серверного логу він
+             не існує взагалі.{% endtrans %}</p>
+          <p>{% trans %}А для курсу баз даних це найцінніший матеріал — видно точний момент,
+             коли студент шукав помилку, і скільки часу на це пішло.{% endtrans %}</p>
+          <p class="hint">{% trans %}Wireward стоїть у розриві між клієнтом студента і
+             кластером і бачить обидві сторони розмови.{% endtrans %}</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="slide">
+      <div class="hd">{% trans %}що видно викладачеві перед заняттям{% endtrans %}</div>
+      <div class="insights">
+        <div class="insight hot">
+          <div class="hd">{% trans %}застрягання{% endtrans %}</div>
+          <div class="num">{% trans %}11 спроб{% endtrans %}</div>
+          <p>{% trans %}Студент годину не може зʼєднати дві таблиці — варто підійти першим.{% endtrans %}</p>
+        </div>
+        <div class="insight">
+          <div class="hd">{% trans %}група{% endtrans %}</div>
+          <div class="num">17 %</div>
+          <p>{% trans %}Кожна шоста спроба групи падає, і майже все — одна й та сама помилка.{% endtrans %}</p>
+        </div>
+        <div class="insight">
+          <div class="hd">{% trans %}лабораторна 4{% endtrans %}</div>
+          <div class="num">62 %</div>
+          <p>{% trans %}Половина групи ще не торкалася EXISTS — тему можна не вважати пройденою.{% endtrans %}</p>
+        </div>
+      </div>
+    </article>
+
+    <article class="slide" id="honest">
+      <div class="hd">{% trans %}чесно: що записується{% endtrans %}</div>
+      <div class="honest-grid">
+        <div><span class="mark yes">{% trans %}так{% endtrans %}</span> {% trans %}Кожен SQL-запит у вашій навчальній
+          базі — текст, час, тривалість, помилка.{% endtrans %}</div>
+        <div><span class="mark yes">{% trans %}так{% endtrans %}</span> {% trans %}Значення, які ви пишете в запиті
+          (наприклад дані в{% endtrans %} <code>INSERT</code>).</div>
+        <div><span class="mark yes">{% trans %}так{% endtrans %}</span> {% trans %}Коли й скільки ви працювали.{% endtrans %}</div>
+        <div><span class="mark no">{% trans %}ні{% endtrans %}</span> {% trans %}Нічого поза цією базою: ні файлів, ні
+          екрана, ні іншої активності на компʼютері.{% endtrans %}</div>
+        <div><span class="mark no">{% trans %}ні{% endtrans %}</span> {% trans %}Жодних блокувань за помилки. Не
+          пропускаються лише команди, що ламають роботу всім (наприклад зняття
+          обмежень памʼяті).{% endtrans %}</div>
+        <div><span class="mark no">{% trans %}ні{% endtrans %}</span> {% trans %}Ніяких автоматичних висновків про
+          списування. Програма їх не робить — вона показує процес.{% endtrans %}</div>
+      </div>
+      <p class="hint foot-note">{% trans %}При першому вході ви це побачите й підтвердите.
+         Окремо й добровільно — згода на використання знеособлених даних у науковій
+         публікації; відмова ні на що не впливає, і рішення можна змінити будь-коли.{% endtrans %}</p>
+    </article>
+
+  </div>
+  <div class="slider-dots">
+    <button class="dot on" data-slide="0" aria-label="{{ _('Слайд 1 з 3') }}"></button>
+    <button class="dot" data-slide="1" aria-label="{{ _('Слайд 2 з 3') }}"></button>
+    <button class="dot" data-slide="2" aria-label="{{ _('Слайд 3 з 3') }}"></button>
+  </div>
+</section>
+<script>
+(() => {
+  const section = document.currentScript.previousElementSibling;
+  const track = section.querySelector('.slider-track');
+  const dots = [...section.querySelectorAll('.slider-dots .dot')];
+  const slides = [...track.children];
+  dots.forEach((dot, i) => dot.addEventListener('click', () => {
+    slides[i].scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+  }));
+  track.addEventListener('scroll', () => {
+    const i = Math.round(track.scrollLeft / track.clientWidth);
+    dots.forEach((dot, j) => dot.classList.toggle('on', j === i));
+  }, { passive: true });
+})();
+</script>
+
+<section class="doors">
+  <div class="door" id="teacher">
+    <div class="hd accent">{% trans %}викладачу{% endtrans %}</div>
+    <h2>{% trans %}Перевірка за пʼять хвилин замість опитування кожного{% endtrans %}</h2>
+    <dl>
+      <dt>{% trans %}Видно роботу, а не тільки результат{% endtrans %}</dt>
+      <dd>{% trans %}Кожен запит, включно з тими, що впали на синтаксисі. Саме їх не
+          бачить ані серверний лог, ані pgAudit: запит, який не розібрався, до
+          виконавця не доходить.{% endtrans %}</dd>
+
+      <dt>{% trans %}Лабораторна — це зміст, а не проміжок часу{% endtrans %}</dt>
+      <dd>{% trans %}Ви задаєте кілька зразкових запитів. Wireward сам знаходить у журналі
+          роботу над цією лабою — нечітко, за формою запиту, бо студентські
+          розвʼязки не збігаються зі зразком слово в слово.{% endtrans %}</dd>
+
+      <dt>{% trans %}Питання до захисту, а не вирок{% endtrans %}</dt>
+      <dd>{% trans %}Показники процесу кажуть, про що спитати: тут студент бився в одну
+          помилку годину, а тут складна відповідь зʼявилася одразу, без жодної
+          спроби до неї. Що це означає — вирішує захист, не програма.{% endtrans %}</dd>
+    </dl>
+  </div>
+
+  <div class="door" id="student">
+    <div class="hd accent">{% trans %}студенту{% endtrans %}</div>
+    <h2>{% trans %}Своя база за один вхід. Встановлювати нічого{% endtrans %}</h2>
+    <ol class="steps">
+      <li>{% trans %}<b>Увійти через LMS.</b> Персональна база PostgreSQL створюється
+          одразу, ви в ній власник.{% endtrans %}</li>
+      <li>{% trans %}<b>Випустити пароль.</b> Одна кнопка в кабінеті; показується один раз.{% endtrans %}</li>
+      <li>{% trans %}<b>Підключитися звичним клієнтом.</b> DBeaver, DataGrip, psql,
+          psycopg — рядок підключення вже готовий у кабінеті.{% endtrans %}</li>
+    </ol>
+    <div class="note">
+      <div class="hd">{% trans %}і головне{% endtrans %}</div>
+      <p>{% trans %}Помилки не караються. Їх видно — але видно й те, що ви самі до всього
+         дійшли. На захисті це ваш аргумент, а не аргумент проти вас.{% endtrans %}</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta wirebg">
+  <h2>{% trans %}Підключіть одну групу на одну лабораторну — і подивіться, чи змінилося
+      те, що ви про неї думали.{% endtrans %}</h2>
+  <div class="choices">
+    <a class="button" href="/auth/login">{% trans %}Вхід через LMS{% endtrans %}</a>
+    {% if dev_login %}
+      <a class="button secondary" href="/auth/dev">{% trans %}Вхід в обхід LMS (розробка){% endtrans %}</a>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
