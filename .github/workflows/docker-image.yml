@@ -13,6 +13,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: Build the Docker image
-      run: docker build . --file Dockerfile --tag my-image-name:$(date +%s)
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Prepare build secrets
+      run: ./scripts/make-secrets.sh
+
+    - name: Build and export container images
+      run: ./scripts/export-images.sh
+
+    - name: Upload images artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: wireward-images
+        path: |
+          dist/wireward-images-*.tar.gz
+          dist/wireward-images-*.tar.gz.sha256
+        if-no-files-found: error
+        retention-days: 7

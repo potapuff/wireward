@@ -2,6 +2,7 @@ name: observer
 
 services:
   postgres:
+    image: observer-postgres
     build:
       context: ./postgres
       args:
@@ -172,6 +173,7 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
   front:
+    image: observer-front
     build:
       context: ./front
       # Джерело значень — git на хості (make up їх експортує), не .git
@@ -238,6 +240,7 @@ services:
       options: { max-size: "10m", max-file: "3" }
 
   pgproxy:
+    image: observer-pgproxy
     build: ./pgproxy
     container_name: observer-pgproxy
     restart: unless-stopped

@@ -8,6 +8,9 @@ cd "$(dirname "$0")/.."
 OUT_DIR="${OUT_DIR:-dist}"
 mkdir -p "$OUT_DIR"
 
+echo "== перевірка / генерація секретів =="
+./scripts/make-secrets.sh
+
 IMAGES=(observer-postgres observer-front observer-pgproxy caddy:2-alpine)
 STAMP="$(date +%Y%m%d-%H%M%S)"
 ARCHIVE="$OUT_DIR/wireward-images-$STAMP.tar"
